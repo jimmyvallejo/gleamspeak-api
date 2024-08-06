@@ -10,8 +10,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jimmyvallejo/gleamspeak-api/internal/api/middleware"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/api/v1/handlers"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/database"
+	"github.com/jimmyvallejo/gleamspeak-api/internal/redis"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -24,6 +26,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	dbUrl := os.Getenv("DB")
+	jwtSecret := os.Getenv("JWT_SECRET")
 
 	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
@@ -37,24 +40,33 @@ func main() {
 
 	dbQueries := database.New(db)
 
+	rdb, err := redis.NewClient()
+
 	mux := http.NewServeMux()
 
 	APICfg := APIConfig{
-		Port: port,
-		DB:   dbQueries,
+		Port:      port,
+		DB:        dbQueries,
+		RDB:       rdb,
+		JwtSecret: jwtSecret,
 	}
 
-	h := handlers.NewHandlers(APICfg.DB)
-	// m := middleware.NewMiddleware(APICfg.DB)
+	h := handlers.NewHandlers(APICfg.DB, APICfg.JwtSecret)
+	m := middleware.NewMiddleware(APICfg.DB, APICfg.RDB, APICfg.JwtSecret)
 
 	// Test readiness
 
 	mux.HandleFunc("GET /v1/healthz", handlers.HandlerReadiness)
 	mux.HandleFunc("GET /v1/err", handlers.HandlerError)
 
+	// Auth Routes
+
+	mux.HandleFunc("POST /v1/auth", h.LoginUserStandard)
+
 	// User Routes
 
-	mux.HandleFunc("POST /v1/users", h.CreateUser)
+	mux.HandleFunc("POST /v1/users", h.CreateUserStandard)
+	mux.HandleFunc("PUT /v1/users", m.IsAuthenticated(h.UpdateUser))
 
 	srv := &http.Server{
 		Addr:    ":" + APICfg.Port,

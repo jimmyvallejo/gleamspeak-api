@@ -7,35 +7,46 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, email, handle, created_at, updated_at)
+const createUserStandard = `-- name: CreateUserStandard :one
+INSERT INTO users (
+        id,
+        email,
+        password,
+        handle,
+        created_at,
+        updated_at
+    )
 VALUES (
         $1,
         $2,
         $3,
         $4,
-        $5
+        $5,
+        $6
     )
-RETURNING id, email, is_active, handle, first_name, last_name, bio, avatar_url, is_verified, created_at, updated_at
+RETURNING id, email, password, is_active, handle, first_name, last_name, bio, avatar_url, is_verified, created_at, updated_at
 `
 
-type CreateUserParams struct {
-	ID        uuid.UUID `json:"id"`
-	Email     string    `json:"email"`
-	Handle    string    `json:"handle"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+type CreateUserStandardParams struct {
+	ID        uuid.UUID      `json:"id"`
+	Email     string         `json:"email"`
+	Password  sql.NullString `json:"password"`
+	Handle    string         `json:"handle"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser,
+func (q *Queries) CreateUserStandard(ctx context.Context, arg CreateUserStandardParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, createUserStandard,
 		arg.ID,
 		arg.Email,
+		arg.Password,
 		arg.Handle,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -44,6 +55,98 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
+		&i.Password,
+		&i.IsActive,
+		&i.Handle,
+		&i.FirstName,
+		&i.LastName,
+		&i.Bio,
+		&i.AvatarUrl,
+		&i.IsVerified,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, email, password, is_active, handle, first_name, last_name, bio, avatar_url, is_verified, created_at, updated_at
+FROM users
+WHERE email = $1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Password,
+		&i.IsActive,
+		&i.Handle,
+		&i.FirstName,
+		&i.LastName,
+		&i.Bio,
+		&i.AvatarUrl,
+		&i.IsVerified,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, email, password, is_active, handle, first_name, last_name, bio, avatar_url, is_verified, created_at, updated_at
+FROM users
+WHERE id = $1
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Password,
+		&i.IsActive,
+		&i.Handle,
+		&i.FirstName,
+		&i.LastName,
+		&i.Bio,
+		&i.AvatarUrl,
+		&i.IsVerified,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUserByID = `-- name: UpdateUserByID :one
+UPDATE users
+SET email = $1, handle = $2, updated_at = $3
+WHERE id = $4
+RETURNING id, email, password, is_active, handle, first_name, last_name, bio, avatar_url, is_verified, created_at, updated_at
+`
+
+type UpdateUserByIDParams struct {
+	Email     string    `json:"email"`
+	Handle    string    `json:"handle"`
+	UpdatedAt time.Time `json:"updated_at"`
+	ID        uuid.UUID `json:"id"`
+}
+
+func (q *Queries) UpdateUserByID(ctx context.Context, arg UpdateUserByIDParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUserByID,
+		arg.Email,
+		arg.Handle,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Password,
 		&i.IsActive,
 		&i.Handle,
 		&i.FirstName,

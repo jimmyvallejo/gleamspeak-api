@@ -19,6 +19,7 @@ type Role struct {
 type User struct {
 	ID         uuid.UUID      `json:"id"`
 	Email      string         `json:"email"`
+	Password   sql.NullString `json:"password"`
 	IsActive   sql.NullBool   `json:"is_active"`
 	Handle     string         `json:"handle"`
 	FirstName  sql.NullString `json:"first_name"`

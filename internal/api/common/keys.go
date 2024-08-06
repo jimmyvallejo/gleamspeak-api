@@ -7,3 +7,7 @@ type StatusResponse struct {
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
+
+type ContextKey string
+
+const UserContextKey ContextKey = "user"

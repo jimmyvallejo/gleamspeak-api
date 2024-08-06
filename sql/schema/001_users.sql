@@ -2,6 +2,7 @@
 CREATE TABLE users (
     id UUID PRIMARY KEY,
     email TEXT NOT NULL UNIQUE,
+    password TEXT,
     is_active BOOLEAN DEFAULT TRUE,
     handle TEXT NOT NULL,
     first_name TEXT,
@@ -21,9 +22,18 @@ CREATE TABLE roles (
 CREATE TABLE user_roles (
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     role_id UUID REFERENCES roles(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, role_id)
+    PRIMARY KEY (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (role_id) REFERENCES roles(id)
 );
+
+INSERT INTO roles (id, name)
+VALUES (gen_random_uuid(), 'member'),
+    (gen_random_uuid(), 'admin');
+
 -- +goose Down
-DROP TABLE users;
-DROP TABLE roles;
+DELETE FROM roles
+WHERE name IN ('member', 'admin');
 DROP TABLE user_roles;
+DROP TABLE roles;
+DROP TABLE users;

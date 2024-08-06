@@ -10,7 +10,7 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-type CreateUserResponse struct {
+type UserResponse struct {
 	ID     uuid.UUID `json:"id"`
 	Email  string    `json:"email"`
 	Handle string    `json:"handle"`
