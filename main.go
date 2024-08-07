@@ -14,6 +14,7 @@ import (
 	"github.com/jimmyvallejo/gleamspeak-api/internal/api/v1/handlers"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/database"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/redis"
+	"github.com/rs/cors"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -41,8 +42,20 @@ func main() {
 	dbQueries := database.New(db)
 
 	rdb, err := redis.NewClient()
+	if err != nil {
+		log.Print("Redis failed to initialize")
+	}
 
 	mux := http.NewServeMux()
+
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowCredentials: true,
+	})
+
+	handler := c.Handler(mux)
 
 	APICfg := APIConfig{
 		Port:      port,
@@ -61,16 +74,21 @@ func main() {
 
 	// Auth Routes
 
-	mux.HandleFunc("POST /v1/auth", h.LoginUserStandard)
+	mux.HandleFunc("POST /v1/login", h.LoginUserStandard)
+	mux.HandleFunc("POST /v1/logout", h.LogoutUserStandard)
+	mux.HandleFunc("GET /v1/auth", m.IsAuthenticated(h.CheckAuthStatus))
 
 	// User Routes
 
 	mux.HandleFunc("POST /v1/users", h.CreateUserStandard)
 	mux.HandleFunc("PUT /v1/users", m.IsAuthenticated(h.UpdateUser))
 
+	//Token Routes
+	mux.HandleFunc("POST /v1/refresh", h.RefreshToken)
+
 	srv := &http.Server{
 		Addr:    ":" + APICfg.Port,
-		Handler: mux,
+		Handler: handler,
 	}
 
 	go func() {

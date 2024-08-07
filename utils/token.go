@@ -25,7 +25,7 @@ var (
 	ErrEmptyToken    = &TokenError{Message: "Token is empty", Code: http.StatusUnauthorized}
 )
 
-func CreateAccessToken(id uuid.UUID, jwtSecret string, expiresInSeconds int) (string, error) {
+func CreateToken(id uuid.UUID, jwtSecret string, expiresInSeconds int) (string, error) {
 	claims := jwt.RegisteredClaims{
 		Issuer:    "gleamspeak",
 		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
@@ -41,24 +41,6 @@ func CreateAccessToken(id uuid.UUID, jwtSecret string, expiresInSeconds int) (st
 	return signedToken, nil
 }
 
-func CreateRefreshToken(jwtSecret string, expiresInSeconds int) (string, error) {
-
-	claims := jwt.RegisteredClaims{
-		Issuer:    "gleamspeak",
-		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
-		ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Duration(expiresInSeconds) * time.Second)),
-		ID:        uuid.New().String(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	signedToken, err := token.SignedString([]byte(jwtSecret))
-
-	if err != nil {
-		return "", fmt.Errorf("failed to create token")
-	}
-	return signedToken, nil
-}
 
 func ExtractToken(r *http.Request, prefix string) (string, error) {
 	authHeader := r.Header.Get("Authorization")

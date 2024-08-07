@@ -77,13 +77,13 @@ func (h *Handlers) CreateUserStandard(w http.ResponseWriter, r *http.Request) {
 }
 
 type UpdateUserRequest struct {
-	Email  string `json:"email"`
-	Handle string `json:"handle"`
+	Email  *string `json:"email"`
+	Handle *string `json:"handle"`
 }
 
 func (h *Handlers) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	user, ok := r.Context().Value(common.UserContextKey).(database.User)
-	
+
 	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Unathorized")
 		return
@@ -97,11 +97,19 @@ func (h *Handlers) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := database.UpdateUserByIDParams{
-		Email:     request.Email,
-		Handle:    request.Handle,
+		Email:     user.Email,
+		Handle:    user.Handle,
 		UpdatedAt: time.Now(),
 		ID:        user.ID,
 	}
+
+	if request.Email != nil {
+		params.Email = *request.Email
+	}
+	if request.Handle != nil {
+		params.Handle = *request.Handle
+	}
+
 	updatedUser, err := h.DB.UpdateUserByID(r.Context(), params)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to update user")
