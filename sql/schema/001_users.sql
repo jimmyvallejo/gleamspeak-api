@@ -20,17 +20,15 @@ CREATE TABLE roles (
     name TEXT NOT NULL UNIQUE
 );
 CREATE TABLE user_roles (
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    role_id UUID REFERENCES roles(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL,
+    role_id UUID NOT NULL,
     PRIMARY KEY (user_id, role_id),
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (role_id) REFERENCES roles(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
 );
-
 INSERT INTO roles (id, name)
 VALUES (gen_random_uuid(), 'member'),
     (gen_random_uuid(), 'admin');
-
 -- +goose Down
 DELETE FROM roles
 WHERE name IN ('member', 'admin');

@@ -13,6 +13,8 @@ type DBInterface interface {
 	CreateUserRoles(ctx context.Context, params database.CreateUserRolesParams) (database.UserRole, error)
 	GetUserByEmail(ctx context.Context, email string) (database.User, error)
 	UpdateUserByID(ctx context.Context, arg database.UpdateUserByIDParams) (database.User, error)
+	CreateServer(ctx context.Context, arg database.CreateServerParams) (database.Server, error)
+	CreateUserServer(ctx context.Context, arg database.CreateUserServerParams) (database.UserServer, error)
 }
 
 type Handlers struct {

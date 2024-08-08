@@ -15,3 +15,9 @@ type UserResponse struct {
 	Email  string    `json:"email"`
 	Handle string    `json:"handle"`
 }
+
+type ServerResponse struct {
+	ID         uuid.UUID `json:"id"`
+	OwnerID    uuid.UUID `json:"owner_id"`
+	ServerName string    `json:"server_name"`
+}

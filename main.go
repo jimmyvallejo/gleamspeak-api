@@ -83,6 +83,10 @@ func main() {
 	mux.HandleFunc("POST /v1/users", h.CreateUserStandard)
 	mux.HandleFunc("PUT /v1/users", m.IsAuthenticated(h.UpdateUser))
 
+	// Server Routes
+
+	mux.HandleFunc("POST /v1/servers", m.IsAuthenticated(h.CreateServer))
+
 	//Token Routes
 	mux.HandleFunc("POST /v1/refresh", h.RefreshToken)
 

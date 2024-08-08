@@ -16,6 +16,22 @@ type Role struct {
 	Name string    `json:"name"`
 }
 
+type Server struct {
+	ID          uuid.UUID      `json:"id"`
+	OwnerID     uuid.UUID      `json:"owner_id"`
+	ServerName  string         `json:"server_name"`
+	Description sql.NullString `json:"description"`
+	IconUrl     sql.NullString `json:"icon_url"`
+	BannerUrl   sql.NullString `json:"banner_url"`
+	IsPublic    sql.NullBool   `json:"is_public"`
+	MemberCount sql.NullInt32  `json:"member_count"`
+	ServerLevel sql.NullInt32  `json:"server_level"`
+	MaxMembers  sql.NullInt32  `json:"max_members"`
+	InviteCode  sql.NullString `json:"invite_code"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
 type User struct {
 	ID         uuid.UUID      `json:"id"`
 	Email      string         `json:"email"`
@@ -34,4 +50,9 @@ type User struct {
 type UserRole struct {
 	UserID uuid.UUID `json:"user_id"`
 	RoleID uuid.UUID `json:"role_id"`
+}
+
+type UserServer struct {
+	UserID   uuid.UUID `json:"user_id"`
+	ServerID uuid.UUID `json:"server_id"`
 }
