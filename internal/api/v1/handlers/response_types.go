@@ -1,6 +1,9 @@
 package handlers
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+	"github.com/jimmyvallejo/gleamspeak-api/internal/database"
+)
 
 type StatusResponse struct {
 	Status string `json:"status"`
@@ -16,8 +19,13 @@ type UserResponse struct {
 	Handle string    `json:"handle"`
 }
 
-type ServerResponse struct {
+type CreateServerResponse struct {
 	ID         uuid.UUID `json:"id"`
 	OwnerID    uuid.UUID `json:"owner_id"`
 	ServerName string    `json:"server_name"`
+}
+
+type DisplayServerResponse struct {
+	UserID      uuid.UUID         `json:"user_id"`
+	Servers []database.GetUserServersRow `json:"servers"`
 }

@@ -86,6 +86,9 @@ func main() {
 	// Server Routes
 
 	mux.HandleFunc("POST /v1/servers", m.IsAuthenticated(h.CreateServer))
+	mux.HandleFunc("POST /v1/servers/join", m.IsAuthenticated(h.JoinServer))
+	mux.HandleFunc("DELETE /v1/servers/user", m.IsAuthenticated(h.LeaveServer))
+	mux.HandleFunc("GET /v1/servers/user/many", m.IsAuthenticated(h.GetUserServers))
 
 	//Token Routes
 	mux.HandleFunc("POST /v1/refresh", h.RefreshToken)

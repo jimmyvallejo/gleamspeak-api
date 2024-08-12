@@ -19,6 +19,7 @@ CREATE TABLE servers (
 CREATE TABLE user_servers (
     user_id UUID NOT NULL,
     server_id UUID NOT NULL,
+    role TEXT NOT NULL,
     PRIMARY KEY (user_id, server_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE

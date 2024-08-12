@@ -46,20 +46,108 @@ func (h *Handlers) CreateServer(w http.ResponseWriter, r *http.Request) {
 	userServerParams := database.CreateUserServerParams{
 		UserID:   user.ID,
 		ServerID: server.ID,
+		Role:     serverAdmin,
 	}
 
 	_, err = h.DB.CreateUserServer(r.Context(), userServerParams)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to create server")
+		respondWithError(w, http.StatusInternalServerError, "Failed to join server")
 		return
 	}
 
-	response := ServerResponse{
-		ID: server.ID,
-		OwnerID: user.ID,
+	response := CreateServerResponse{
+		ID:         server.ID,
+		OwnerID:    user.ID,
 		ServerName: server.ServerName,
 	}
 
 	respondWithJSON(w, http.StatusCreated, response)
 
+}
+
+func (h *Handlers) GetUserServers(w http.ResponseWriter, r *http.Request) {
+	user, ok := r.Context().Value(common.UserContextKey).(database.User)
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "Unathorized")
+		return
+	}
+
+	servers, err := h.DB.GetUserServers(r.Context(), user.ID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to fetch servers")
+	}
+
+	response := DisplayServerResponse{
+		UserID:  user.ID,
+		Servers: servers,
+	}
+
+	respondWithJSON(w, http.StatusOK, response)
+}
+
+type JoinServerRequest struct {
+	ServerID uuid.UUID `json:"server_id"`
+}
+
+func (h *Handlers) JoinServer(w http.ResponseWriter, r *http.Request) {
+
+	user, ok := r.Context().Value(common.UserContextKey).(database.User)
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "Unathorized")
+		return
+	}
+
+	request := JoinServerRequest{}
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	userServerParams := database.CreateUserServerParams{
+		UserID:   user.ID,
+		ServerID: request.ServerID,
+		Role:     serverUser,
+	}
+
+	userServer, err := h.DB.CreateUserServer(r.Context(), userServerParams)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to join server")
+		return
+	}
+
+	respondWithJSON(w, http.StatusCreated, userServer)
+}
+
+type leaveServerRequest struct {
+	ServerID uuid.UUID `json:"server_id"`
+}
+
+func (h *Handlers) LeaveServer(w http.ResponseWriter, r *http.Request) {
+
+	user, ok := r.Context().Value(common.UserContextKey).(database.User)
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "Unathorized")
+		return
+	}
+
+	request := leaveServerRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	userServerParams := database.DeleteUserServerParams{
+		UserID:   user.ID,
+		ServerID: request.ServerID,
+	}
+
+	err = h.DB.DeleteUserServer(r.Context(), userServerParams)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to leave server")
+	}
+
+	respondNoBody(w, http.StatusOK)
 }

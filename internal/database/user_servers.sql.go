@@ -7,24 +7,109 @@ package database
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 const createUserServer = `-- name: CreateUserServer :one
-INSERT INTO user_servers (user_id, server_id)
-VALUES ($1, $2)
-RETURNING user_id, server_id
+INSERT INTO user_servers (user_id, server_id, role)
+VALUES ($1, $2, $3)
+RETURNING user_id, server_id, role
 `
 
 type CreateUserServerParams struct {
 	UserID   uuid.UUID `json:"user_id"`
 	ServerID uuid.UUID `json:"server_id"`
+	Role     string    `json:"role"`
 }
 
 func (q *Queries) CreateUserServer(ctx context.Context, arg CreateUserServerParams) (UserServer, error) {
-	row := q.db.QueryRowContext(ctx, createUserServer, arg.UserID, arg.ServerID)
+	row := q.db.QueryRowContext(ctx, createUserServer, arg.UserID, arg.ServerID, arg.Role)
 	var i UserServer
-	err := row.Scan(&i.UserID, &i.ServerID)
+	err := row.Scan(&i.UserID, &i.ServerID, &i.Role)
 	return i, err
+}
+
+const deleteUserServer = `-- name: DeleteUserServer :exec
+DELETE FROM user_servers
+WHERE user_id = $1 AND server_id = $2
+`
+
+type DeleteUserServerParams struct {
+	UserID   uuid.UUID `json:"user_id"`
+	ServerID uuid.UUID `json:"server_id"`
+}
+
+func (q *Queries) DeleteUserServer(ctx context.Context, arg DeleteUserServerParams) error {
+	_, err := q.db.ExecContext(ctx, deleteUserServer, arg.UserID, arg.ServerID)
+	return err
+}
+
+const getUserServers = `-- name: GetUserServers :many
+SELECT s.id AS server_id,
+    s.server_name,
+    s.description,
+    s.icon_url,
+    s.banner_url,
+    s.is_public,
+    s.member_count,
+    s.server_level,
+    s.max_members,
+    s.created_at AS server_created_at,
+    s.updated_at AS server_updated_at
+FROM user_servers us
+    JOIN servers s ON us.server_id = s.id
+WHERE us.user_id = $1
+ORDER BY s.server_name ASC
+`
+
+type GetUserServersRow struct {
+	ServerID        uuid.UUID      `json:"server_id"`
+	ServerName      string         `json:"server_name"`
+	Description     sql.NullString `json:"description"`
+	IconUrl         sql.NullString `json:"icon_url"`
+	BannerUrl       sql.NullString `json:"banner_url"`
+	IsPublic        sql.NullBool   `json:"is_public"`
+	MemberCount     sql.NullInt32  `json:"member_count"`
+	ServerLevel     sql.NullInt32  `json:"server_level"`
+	MaxMembers      sql.NullInt32  `json:"max_members"`
+	ServerCreatedAt time.Time      `json:"server_created_at"`
+	ServerUpdatedAt time.Time      `json:"server_updated_at"`
+}
+
+func (q *Queries) GetUserServers(ctx context.Context, userID uuid.UUID) ([]GetUserServersRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUserServers, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUserServersRow
+	for rows.Next() {
+		var i GetUserServersRow
+		if err := rows.Scan(
+			&i.ServerID,
+			&i.ServerName,
+			&i.Description,
+			&i.IconUrl,
+			&i.BannerUrl,
+			&i.IsPublic,
+			&i.MemberCount,
+			&i.ServerLevel,
+			&i.MaxMembers,
+			&i.ServerCreatedAt,
+			&i.ServerUpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

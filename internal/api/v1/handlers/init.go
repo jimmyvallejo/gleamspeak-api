@@ -15,6 +15,8 @@ type DBInterface interface {
 	UpdateUserByID(ctx context.Context, arg database.UpdateUserByIDParams) (database.User, error)
 	CreateServer(ctx context.Context, arg database.CreateServerParams) (database.Server, error)
 	CreateUserServer(ctx context.Context, arg database.CreateUserServerParams) (database.UserServer, error)
+	GetUserServers(ctx context.Context, userID uuid.UUID) ([]database.GetUserServersRow, error)
+	DeleteUserServer(ctx context.Context, arg database.DeleteUserServerParams) error
 }
 
 type Handlers struct {

@@ -55,4 +55,5 @@ type UserRole struct {
 type UserServer struct {
 	UserID   uuid.UUID `json:"user_id"`
 	ServerID uuid.UUID `json:"server_id"`
+	Role     string    `json:"role"`
 }
