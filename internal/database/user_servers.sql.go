@@ -47,6 +47,23 @@ func (q *Queries) DeleteUserServer(ctx context.Context, arg DeleteUserServerPara
 	return err
 }
 
+const getUserServer = `-- name: GetUserServer :one
+SELECT user_id, server_id, role FROM user_servers
+WHERE user_id = $1 AND server_id = $2
+`
+
+type GetUserServerParams struct {
+	UserID   uuid.UUID `json:"user_id"`
+	ServerID uuid.UUID `json:"server_id"`
+}
+
+func (q *Queries) GetUserServer(ctx context.Context, arg GetUserServerParams) (UserServer, error) {
+	row := q.db.QueryRowContext(ctx, getUserServer, arg.UserID, arg.ServerID)
+	var i UserServer
+	err := row.Scan(&i.UserID, &i.ServerID, &i.Role)
+	return i, err
+}
+
 const getUserServers = `-- name: GetUserServers :many
 SELECT s.id AS server_id,
     s.server_name,

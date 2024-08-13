@@ -16,7 +16,11 @@ type DBInterface interface {
 	CreateServer(ctx context.Context, arg database.CreateServerParams) (database.Server, error)
 	CreateUserServer(ctx context.Context, arg database.CreateUserServerParams) (database.UserServer, error)
 	GetUserServers(ctx context.Context, userID uuid.UUID) ([]database.GetUserServersRow, error)
+	GetUserServer(ctx context.Context, arg database.GetUserServerParams) (database.UserServer, error)
 	DeleteUserServer(ctx context.Context, arg database.DeleteUserServerParams) error
+	CreateTextChannel(ctx context.Context, arg database.CreateTextChannelParams) (database.TextChannel, error)
+	GetServerTextChannels(ctx context.Context, serverID uuid.UUID) ([]database.TextChannel, error)
+	GetLanguageIDByName(ctx context.Context, language string) (uuid.UUID, error)
 }
 
 type Handlers struct {

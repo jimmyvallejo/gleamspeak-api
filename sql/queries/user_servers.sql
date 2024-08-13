@@ -20,6 +20,10 @@ FROM user_servers us
 WHERE us.user_id = $1
 ORDER BY s.server_name ASC;
 
+-- name: GetUserServer :one
+SELECT * FROM user_servers
+WHERE user_id = $1 AND server_id = $2;
+
 -- name: DeleteUserServer :exec
 DELETE FROM user_servers
 WHERE user_id = $1 AND server_id = $2;

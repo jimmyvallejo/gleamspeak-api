@@ -165,6 +165,7 @@ func (h *Handlers) LeaveServer(w http.ResponseWriter, r *http.Request) {
 	err = h.DB.DeleteUserServer(r.Context(), userServerParams)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to leave server")
+		return
 	}
 
 	respondNoBody(w, http.StatusOK)

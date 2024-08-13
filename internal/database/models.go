@@ -11,6 +11,11 @@ import (
 	"github.com/google/uuid"
 )
 
+type Language struct {
+	ID       uuid.UUID `json:"id"`
+	Language string    `json:"language"`
+}
+
 type Role struct {
 	ID   uuid.UUID `json:"id"`
 	Name string    `json:"name"`
@@ -30,6 +35,18 @@ type Server struct {
 	InviteCode  sql.NullString `json:"invite_code"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+type TextChannel struct {
+	ID          uuid.UUID    `json:"id"`
+	OwnerID     uuid.UUID    `json:"owner_id"`
+	ServerID    uuid.UUID    `json:"server_id"`
+	LanguageID  uuid.UUID    `json:"language_id"`
+	ChannelName string       `json:"channel_name"`
+	LastActive  sql.NullTime `json:"last_active"`
+	IsLocked    sql.NullBool `json:"is_locked"`
+	CreatedAt   time.Time    `json:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
 }
 
 type User struct {

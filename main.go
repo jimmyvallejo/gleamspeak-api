@@ -90,6 +90,10 @@ func main() {
 	mux.HandleFunc("DELETE /v1/servers/user", m.IsAuthenticated(h.LeaveServer))
 	mux.HandleFunc("GET /v1/servers/user/many", m.IsAuthenticated(h.GetUserServers))
 
+	// Text Channel Routes
+	mux.HandleFunc("POST /v1/channels/text", m.IsAuthenticated(h.CreateTextChannel))
+	mux.HandleFunc("GET /v1/channels/{serverID}", m.IsAuthenticated(h.GetServerTextChannels))
+
 	//Token Routes
 	mux.HandleFunc("POST /v1/refresh", h.RefreshToken)
 

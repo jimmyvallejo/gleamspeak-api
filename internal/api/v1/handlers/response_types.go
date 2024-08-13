@@ -27,11 +27,11 @@ type CreateServerResponse struct {
 }
 
 type SimpleServer struct {
-	ServerID        uuid.UUID    `json:"server_id"`
+	ServerID        uuid.UUID `json:"server_id"`
 	ServerName      string    `json:"server_name"`
-	Description     string    `json:"description"` 
-	IconURL         string    `json:"icon_url"`    
-	BannerURL       string    `json:"banner_url"`  
+	Description     string    `json:"description"`
+	IconURL         string    `json:"icon_url"`
+	BannerURL       string    `json:"banner_url"`
 	IsPublic        bool      `json:"is_public"`
 	MemberCount     int32     `json:"member_count"`
 	ServerLevel     int32     `json:"server_level"`
@@ -43,4 +43,28 @@ type SimpleServer struct {
 type SimpleDisplayServerResponse struct {
 	UserID  uuid.UUID      `json:"user_id"`
 	Servers []SimpleServer `json:"servers"`
+}
+
+type CreateTextChannelResponse struct {
+	ID          uuid.UUID `json:"channel_id"`
+	OwnerID     uuid.UUID `json:"owner_id"`
+	ServerID    uuid.UUID `json:"server_id"`
+	ChannelName string    `json:"channel_name"`
+}
+
+type SimpleChannel struct {
+	ChannelID        uuid.UUID `json:"channel_id"`
+	OwnerID          uuid.UUID `json:"owner_id"`
+	ServerID         uuid.UUID `json:"server_id"`
+	LanguageID       uuid.UUID `json:"language_id"`
+	ChannelName      string    `json:"channel_name"`
+	LastActive       time.Time `json:"last_active"`
+	IsLocked         bool      `json:"is_locked"`
+	ChannelCreatedAt time.Time `json:"channel_created_at"`
+	ChannelUpdatedAt time.Time `json:"channel_updated_at"`
+}
+
+type GetServerTextChannelResponse struct {
+	ServerID uuid.UUID       `json:"server_id"`
+	Channels []SimpleChannel `json:"channels"`
 }
