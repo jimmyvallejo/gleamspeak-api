@@ -1,8 +1,9 @@
 package handlers
 
 import (
+	"time"
+
 	"github.com/google/uuid"
-	"github.com/jimmyvallejo/gleamspeak-api/internal/database"
 )
 
 type StatusResponse struct {
@@ -25,7 +26,21 @@ type CreateServerResponse struct {
 	ServerName string    `json:"server_name"`
 }
 
-type DisplayServerResponse struct {
-	UserID      uuid.UUID         `json:"user_id"`
-	Servers []database.GetUserServersRow `json:"servers"`
+type SimpleServer struct {
+	ServerID        uuid.UUID    `json:"server_id"`
+	ServerName      string    `json:"server_name"`
+	Description     string    `json:"description"` 
+	IconURL         string    `json:"icon_url"`    
+	BannerURL       string    `json:"banner_url"`  
+	IsPublic        bool      `json:"is_public"`
+	MemberCount     int32     `json:"member_count"`
+	ServerLevel     int32     `json:"server_level"`
+	MaxMembers      int32     `json:"max_members"`
+	ServerCreatedAt time.Time `json:"server_created_at"`
+	ServerUpdatedAt time.Time `json:"server_updated_at"`
+}
+
+type SimpleDisplayServerResponse struct {
+	UserID  uuid.UUID      `json:"user_id"`
+	Servers []SimpleServer `json:"servers"`
 }
