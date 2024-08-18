@@ -1,15 +1,12 @@
 package websocket
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/api/v1/handlers"
-	"github.com/jimmyvallejo/gleamspeak-api/internal/database"
 )
 
 var (
@@ -90,48 +87,11 @@ func (c *Client) writeMessages() {
 				return
 			}
 
-			var wsParams = SendMessageResponse{}
+			var response = handlers.SimpleMessage{}
 
-			if err := json.Unmarshal(message.Payload, &wsParams); err != nil {
+			if err := json.Unmarshal(message.Payload, &response); err != nil {
 				log.Println("error unmarshaling message")
 				continue
-			}
-
-			owner, err := uuid.Parse(wsParams.OwnerID.String())
-			if err != nil {
-				log.Println("failed to parse owner id")
-				continue
-			}
-			channel, err := uuid.Parse(wsParams.ChannelID.String())
-			if err != nil {
-				log.Println("failed to parse channel id")
-				continue
-			}
-
-			var createParams = database.CreateTextMessageParams{
-				ID:        uuid.New(),
-				OwnerID:   owner,
-				ChannelID: channel,
-				Message:   wsParams.Message,
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-			}
-
-			createdMessage, err := c.manager.DB.CreateTextMessage(context.Background(), createParams)
-			if err != nil {
-				log.Printf("failed to save message to database")
-				continue
-			}
-
-			var response = handlers.SimpleMessage{
-				ID:          createdMessage.ID,
-				ChannelID:   createdMessage.ChannelID,
-				OwnerID:     createdMessage.OwnerID,
-				OwnerHandle: wsParams.Handle, 
-				Message:     createdMessage.Message,
-				Image:       createdMessage.Image.String, 
-				CreatedAt:   createdMessage.CreatedAt,
-				UpdatedAt:   createdMessage.UpdatedAt,
 			}
 
 			var sentEvent = ReturnEvent{

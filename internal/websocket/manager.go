@@ -1,12 +1,14 @@
 package websocket
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -85,27 +87,39 @@ func SendMessage(event Event, c *Client) error {
 	if err != nil {
 		return fmt.Errorf("invalid UUID format for chatroom: %v", err)
 	}
-	var textMessage = SendMessageResponse{
-		OwnerID: ownerID,
-		Handle: chatEvent.Handle,
+
+	var createParams = database.CreateTextMessageParams{
+		ID:        uuid.New(),
+		OwnerID:   ownerID,
 		ChannelID: channelID,
-		Message: chatEvent.Message,
+		Message:   chatEvent.Message,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
-
-
-	if chatEvent.Image != "" {
-		textMessage.Image = chatEvent.Image
-	} else {
-		textMessage.Image = ""
-	}
-	data, err := json.Marshal(textMessage)
+	createdMessage, err := c.manager.DB.CreateTextMessage(context.Background(), createParams)
 	if err != nil {
-		return fmt.Errorf("failed to marshal broadcast: %v", err)
+		return fmt.Errorf("failed to add message to database: %v", err)
+	}
+
+	var response = handlers.SimpleMessage{
+		ID:          createdMessage.ID,
+		ChannelID:   createdMessage.ChannelID,
+		OwnerID:     createdMessage.OwnerID,
+		OwnerHandle: chatEvent.Handle,
+		Message:     createdMessage.Message,
+		Image:       createdMessage.Image.String,
+		CreatedAt:   createdMessage.CreatedAt,
+		UpdatedAt:   createdMessage.UpdatedAt,
+	}
+
+	payload, err := json.Marshal(response)
+	if err != nil {
+		return fmt.Errorf("error marshaling json for response: %v", err)
 	}
 
 	outgoingEvent := Event{
-		Payload: data,
+		Payload: payload,
 		Type:    EventNewMessage,
 	}
 
