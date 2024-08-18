@@ -68,3 +68,15 @@ type GetServerTextChannelResponse struct {
 	ServerID uuid.UUID       `json:"server_id"`
 	Channels []SimpleChannel `json:"channels"`
 }
+
+type SimpleMessage struct {
+	ID          uuid.UUID `json:"id"`
+	OwnerID     uuid.UUID `json:"owner_id"`
+	OwnerHandle string    `json:"handle"`
+	ChannelID   uuid.UUID `json:"channel_id"`
+	Message     string    `json:"message"`
+	Image       string    `json:"image"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+

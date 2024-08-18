@@ -49,6 +49,16 @@ type TextChannel struct {
 	UpdatedAt   time.Time    `json:"updated_at"`
 }
 
+type TextMessage struct {
+	ID        uuid.UUID      `json:"id"`
+	OwnerID   uuid.UUID      `json:"owner_id"`
+	ChannelID uuid.UUID      `json:"channel_id"`
+	Message   string         `json:"message"`
+	Image     sql.NullString `json:"image"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+}
+
 type User struct {
 	ID         uuid.UUID      `json:"id"`
 	Email      string         `json:"email"`

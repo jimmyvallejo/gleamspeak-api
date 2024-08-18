@@ -21,6 +21,8 @@ type DBInterface interface {
 	CreateTextChannel(ctx context.Context, arg database.CreateTextChannelParams) (database.TextChannel, error)
 	GetServerTextChannels(ctx context.Context, serverID uuid.UUID) ([]database.TextChannel, error)
 	GetLanguageIDByName(ctx context.Context, language string) (uuid.UUID, error)
+	CreateTextMessage(ctx context.Context, arg database.CreateTextMessageParams) (database.TextMessage, error)
+	GetChannelTextMessages(ctx context.Context, channelID uuid.UUID) ([]database.GetChannelTextMessagesRow, error)
 }
 
 type Handlers struct {

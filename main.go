@@ -14,6 +14,7 @@ import (
 	"github.com/jimmyvallejo/gleamspeak-api/internal/api/v1/handlers"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/database"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/redis"
+	"github.com/jimmyvallejo/gleamspeak-api/internal/websocket"
 	"github.com/rs/cors"
 
 	"github.com/joho/godotenv"
@@ -49,7 +50,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedOrigins:   []string{"http://localhost:5173", "http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		AllowCredentials: true,
@@ -57,15 +58,18 @@ func main() {
 
 	handler := c.Handler(mux)
 
-	APICfg := APIConfig{
+	apiCfg := APIConfig{
 		Port:      port,
 		DB:        dbQueries,
 		RDB:       rdb,
 		JwtSecret: jwtSecret,
 	}
 
-	h := handlers.NewHandlers(APICfg.DB, APICfg.JwtSecret)
-	m := middleware.NewMiddleware(APICfg.DB, APICfg.RDB, APICfg.JwtSecret)
+	h := handlers.NewHandlers(apiCfg.DB, apiCfg.JwtSecret)
+	m := middleware.NewMiddleware(apiCfg.DB, apiCfg.RDB, apiCfg.JwtSecret)
+	w := websocket.NewManager(apiCfg.DB, apiCfg.RDB, h)
+
+	apiCfg.Handlers = h
 
 	// Test readiness
 
@@ -94,16 +98,25 @@ func main() {
 	mux.HandleFunc("POST /v1/channels/text", m.IsAuthenticated(h.CreateTextChannel))
 	mux.HandleFunc("GET /v1/channels/{serverID}", m.IsAuthenticated(h.GetServerTextChannels))
 
+	// Message Routes
+
+	mux.HandleFunc("POST /v1/messages", m.IsAuthenticated(h.CreateTextMessage))
+	mux.HandleFunc("GET /v1/messages/{channelID}", m.IsAuthenticated(h.GetChannelTextMessages))
+
 	//Token Routes
 	mux.HandleFunc("POST /v1/refresh", h.RefreshToken)
 
+	// Upgrade to WebSocket
+
+	mux.HandleFunc("/ws", w.ServeWs)
+
 	srv := &http.Server{
-		Addr:    ":" + APICfg.Port,
+		Addr:    ":" + apiCfg.Port,
 		Handler: handler,
 	}
 
 	go func() {
-		log.Printf("Serving on port: %s\n", APICfg.Port)
+		log.Printf("Serving on port: %s\n", apiCfg.Port)
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatalf("HTTP server error: %v", err)
 		}
