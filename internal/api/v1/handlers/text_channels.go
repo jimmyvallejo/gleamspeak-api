@@ -1,10 +1,8 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -140,56 +138,6 @@ func (h *Handlers) GetChannelTextMessages(w http.ResponseWriter, r *http.Request
 		}
 
 	}
-	
+
 	respondWithJSON(w, http.StatusOK, normalizedMessages)
-}
-
-type CreateTextMessageRequest struct {
-	OwnerID   string `json:"owner_id"`
-	ChannelID string `json:"channel_id"`
-	Message   string `json:"message"`
-	Image     string `json:"image"`
-}
-
-func (h *Handlers) CreateTextMessage(w http.ResponseWriter, r *http.Request) {
-	request := CreateTextMessageRequest{}
-	err := json.NewDecoder(r.Body).Decode(&request)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid JSON")
-		return
-	}
-
-	channelID, err := uuid.Parse(request.ChannelID)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Failed to parse uuid")
-		return
-	}
-
-	ownerID, err := uuid.Parse(request.OwnerID)
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Failed to parse uuid")
-		return
-	}
-
-	var params = database.CreateTextMessageParams{
-		ID:        uuid.New(),
-		OwnerID:   ownerID,
-		ChannelID: channelID,
-		Message:   request.Message,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
-	if request.Image != "" {
-		params.Image = sql.NullString{
-			String: request.Image,
-			Valid:  true,
-		}
-	}
-	_, err = h.DB.CreateTextMessage(r.Context(), params)
-	if err != nil {
-		log.Printf("failed to save to db: %v", err)
-	}
-
-	respondWithJSON(w, http.StatusCreated, params)
 }

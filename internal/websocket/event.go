@@ -2,9 +2,7 @@ package websocket
 
 import (
 	"encoding/json"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/api/v1/handlers"
 )
 
@@ -29,22 +27,9 @@ type SendMessageEvent struct {
 	Image   string `json:"image"`
 }
 
-type SendMessageResponse struct {
-	OwnerID   uuid.UUID `json:"owner_id"`
-	Handle    string    `json:"handle"`
-	ChannelID uuid.UUID `json:"channel_id"`
-	Message   string    `json:"message"`
-	Image     string    `json:"image"`
-}
-
 type ReturnEvent struct {
 	Type    string                 `json:"type"`
 	Payload handlers.SimpleMessage `json:"payload"`
-}
-
-type NewMessageEvent struct {
-	SendMessageEvent
-	Sent time.Time `json:"sent"`
 }
 
 type changeRoomEvent struct {

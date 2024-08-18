@@ -100,7 +100,6 @@ func main() {
 
 	// Message Routes
 
-	mux.HandleFunc("POST /v1/messages", m.IsAuthenticated(h.CreateTextMessage))
 	mux.HandleFunc("GET /v1/messages/{channelID}", m.IsAuthenticated(h.GetChannelTextMessages))
 
 	//Token Routes
