@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -108,17 +111,21 @@ type JoinServerRequest struct {
 }
 
 func (h *Handlers) JoinServer(w http.ResponseWriter, r *http.Request) {
-
 	user, ok := r.Context().Value(common.UserContextKey).(database.User)
 	if !ok {
-		respondWithError(w, http.StatusUnauthorized, "Unathorized")
+		respondWithError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	request := JoinServerRequest{}
-	err := json.NewDecoder(r.Body).Decode(&request)
-	if err != nil {
+	var request JoinServerRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	foundServer, err := h.DB.GetOneServerByID(r.Context(), request.ServerID)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Server not found")
 		return
 	}
 
@@ -132,6 +139,21 @@ func (h *Handlers) JoinServer(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to join server")
 		return
+	}
+
+	newCount := sql.NullInt32{
+		Int32: foundServer.MemberCount.Int32 + 1,
+		Valid: true,
+	}
+
+	updateMemberCountParams := database.UpdateServerMemberCountParams{
+		ID:          request.ServerID,
+		MemberCount: newCount,
+	}
+
+	_, err = h.DB.UpdateServerMemberCount(r.Context(), updateMemberCountParams)
+	if err != nil {
+		log.Printf("Failed to update member count: %v", err)
 	}
 
 	respondWithJSON(w, http.StatusCreated, userServer)
@@ -169,4 +191,31 @@ func (h *Handlers) LeaveServer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondNoBody(w, http.StatusOK)
+}
+
+func (h *Handlers) GetRecentServers(w http.ResponseWriter, r *http.Request) {
+
+	servers, err := h.DB.GetRecentServers(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch recent servers: %v", err))
+	}
+
+	SimpleRecentServers := make([]SimpleRecentServer, len(servers))
+
+	for i, server := range servers {
+		SimpleRecentServers[i] = SimpleRecentServer{
+			ServerID:        server.ID,
+			ServerName:      server.ServerName,
+			Description:     server.Description.String,
+			IconURL:         server.IconUrl.String,
+			BannerURL:       server.BannerUrl.String,
+			MemberCount:     server.MemberCount.Int32,
+			ServerCreatedAt: server.CreatedAt,
+			ServerUpdatedAt: server.UpdatedAt,
+			OwnerHandle:     server.Handle,
+			OwnerAvatar:     server.AvatarUrl.String,
+		}
+	}
+
+	respondWithJSON(w, http.StatusOK, SimpleRecentServers)
 }

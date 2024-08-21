@@ -8,3 +8,30 @@ INSERT INTO servers (
     )
 VALUES ($1, $2, $3, $4, $5)
 RETURNING *;
+-- name: GetOneServerByID :one
+SELECT *
+FROM servers
+WHERE id = $1;
+-- name: GetRecentServers :many
+SELECT s.id,
+    s.server_name,
+    s.description,
+    s.icon_url,
+    s.banner_url,
+    s.member_count,
+    s.created_at,
+    s.updated_at,
+    u.handle,
+    u.avatar_url
+FROM servers s
+    INNER JOIN users u ON s.owner_id = u.id
+WHERE s.is_public = TRUE
+ORDER BY s.created_at DESC
+LIMIT 10;
+-- name: UpdateServerMemberCount :one
+UPDATE servers
+SET member_count = $2
+WHERE id = $1
+RETURNING id,
+    server_name,
+    member_count;

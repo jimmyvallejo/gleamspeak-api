@@ -14,9 +14,12 @@ type DBInterface interface {
 	GetUserByEmail(ctx context.Context, email string) (database.User, error)
 	UpdateUserByID(ctx context.Context, arg database.UpdateUserByIDParams) (database.User, error)
 	CreateServer(ctx context.Context, arg database.CreateServerParams) (database.Server, error)
+	GetRecentServers(ctx context.Context) ([]database.GetRecentServersRow, error)
 	CreateUserServer(ctx context.Context, arg database.CreateUserServerParams) (database.UserServer, error)
+	UpdateServerMemberCount(ctx context.Context, arg database.UpdateServerMemberCountParams) (database.UpdateServerMemberCountRow, error) 
 	GetUserServers(ctx context.Context, userID uuid.UUID) ([]database.GetUserServersRow, error)
 	GetUserServer(ctx context.Context, arg database.GetUserServerParams) (database.UserServer, error)
+	GetOneServerByID(ctx context.Context, id uuid.UUID) (database.Server, error)
 	DeleteUserServer(ctx context.Context, arg database.DeleteUserServerParams) error
 	CreateTextChannel(ctx context.Context, arg database.CreateTextChannelParams) (database.TextChannel, error)
 	GetServerTextChannels(ctx context.Context, serverID uuid.UUID) ([]database.TextChannel, error)

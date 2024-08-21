@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -56,5 +57,124 @@ func (q *Queries) CreateServer(ctx context.Context, arg CreateServerParams) (Ser
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
+	return i, err
+}
+
+const getOneServerByID = `-- name: GetOneServerByID :one
+SELECT id, owner_id, server_name, description, icon_url, banner_url, is_public, member_count, server_level, max_members, invite_code, created_at, updated_at
+FROM servers
+WHERE id = $1
+`
+
+func (q *Queries) GetOneServerByID(ctx context.Context, id uuid.UUID) (Server, error) {
+	row := q.db.QueryRowContext(ctx, getOneServerByID, id)
+	var i Server
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.ServerName,
+		&i.Description,
+		&i.IconUrl,
+		&i.BannerUrl,
+		&i.IsPublic,
+		&i.MemberCount,
+		&i.ServerLevel,
+		&i.MaxMembers,
+		&i.InviteCode,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getRecentServers = `-- name: GetRecentServers :many
+SELECT s.id,
+    s.server_name,
+    s.description,
+    s.icon_url,
+    s.banner_url,
+    s.member_count,
+    s.created_at,
+    s.updated_at,
+    u.handle,
+    u.avatar_url
+FROM servers s
+    INNER JOIN users u ON s.owner_id = u.id
+WHERE s.is_public = TRUE
+ORDER BY s.created_at DESC
+LIMIT 10
+`
+
+type GetRecentServersRow struct {
+	ID          uuid.UUID      `json:"id"`
+	ServerName  string         `json:"server_name"`
+	Description sql.NullString `json:"description"`
+	IconUrl     sql.NullString `json:"icon_url"`
+	BannerUrl   sql.NullString `json:"banner_url"`
+	MemberCount sql.NullInt32  `json:"member_count"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	Handle      string         `json:"handle"`
+	AvatarUrl   sql.NullString `json:"avatar_url"`
+}
+
+func (q *Queries) GetRecentServers(ctx context.Context) ([]GetRecentServersRow, error) {
+	rows, err := q.db.QueryContext(ctx, getRecentServers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetRecentServersRow
+	for rows.Next() {
+		var i GetRecentServersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ServerName,
+			&i.Description,
+			&i.IconUrl,
+			&i.BannerUrl,
+			&i.MemberCount,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Handle,
+			&i.AvatarUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateServerMemberCount = `-- name: UpdateServerMemberCount :one
+UPDATE servers
+SET member_count = $2
+WHERE id = $1
+RETURNING id,
+    server_name,
+    member_count
+`
+
+type UpdateServerMemberCountParams struct {
+	ID          uuid.UUID     `json:"id"`
+	MemberCount sql.NullInt32 `json:"member_count"`
+}
+
+type UpdateServerMemberCountRow struct {
+	ID          uuid.UUID     `json:"id"`
+	ServerName  string        `json:"server_name"`
+	MemberCount sql.NullInt32 `json:"member_count"`
+}
+
+func (q *Queries) UpdateServerMemberCount(ctx context.Context, arg UpdateServerMemberCountParams) (UpdateServerMemberCountRow, error) {
+	row := q.db.QueryRowContext(ctx, updateServerMemberCount, arg.ID, arg.MemberCount)
+	var i UpdateServerMemberCountRow
+	err := row.Scan(&i.ID, &i.ServerName, &i.MemberCount)
 	return i, err
 }

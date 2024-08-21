@@ -40,6 +40,19 @@ type SimpleServer struct {
 	ServerUpdatedAt time.Time `json:"server_updated_at"`
 }
 
+type SimpleRecentServer struct {
+	ServerID        uuid.UUID `json:"server_id"`
+	ServerName      string    `json:"server_name"`
+	Description     string    `json:"description"`
+	IconURL         string    `json:"icon_url"`
+	BannerURL       string    `json:"banner_url"`
+	MemberCount     int32     `json:"member_count"`
+	ServerCreatedAt time.Time `json:"server_created_at"`
+	ServerUpdatedAt time.Time `json:"server_updated_at"`
+	OwnerHandle     string    `json:"owner_handle"`
+	OwnerAvatar     string    `json:"owner_avatar"`
+}
+
 type SimpleDisplayServerResponse struct {
 	UserID  uuid.UUID      `json:"user_id"`
 	Servers []SimpleServer `json:"servers"`
@@ -79,4 +92,3 @@ type SimpleMessage struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
-
