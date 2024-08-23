@@ -33,6 +33,7 @@ type SimpleServer struct {
 	IconURL         string    `json:"icon_url"`
 	BannerURL       string    `json:"banner_url"`
 	IsPublic        bool      `json:"is_public"`
+	InviteCode      string    `json:"invite_code"`
 	MemberCount     int32     `json:"member_count"`
 	ServerLevel     int32     `json:"server_level"`
 	MaxMembers      int32     `json:"max_members"`

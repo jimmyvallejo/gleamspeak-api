@@ -3,15 +3,20 @@ INSERT INTO servers (
         id,
         owner_id,
         server_name,
+        invite_code,
         created_at,
         updated_at
     )
-VALUES ($1, $2, $3, $4, $5)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 -- name: GetOneServerByID :one
 SELECT *
 FROM servers
 WHERE id = $1;
+-- name: GetOneServerByCode :one
+SELECT *
+FROM servers
+WHERE invite_code = $1;
 -- name: GetRecentServers :many
 SELECT s.id,
     s.server_name,

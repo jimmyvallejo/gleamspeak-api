@@ -20,6 +20,7 @@ type DBInterface interface {
 	GetUserServers(ctx context.Context, userID uuid.UUID) ([]database.GetUserServersRow, error)
 	GetUserServer(ctx context.Context, arg database.GetUserServerParams) (database.UserServer, error)
 	GetOneServerByID(ctx context.Context, id uuid.UUID) (database.Server, error)
+	GetOneServerByCode(ctx context.Context, inviteCode string) (database.Server, error)
 	DeleteUserServer(ctx context.Context, arg database.DeleteUserServerParams) error
 	CreateTextChannel(ctx context.Context, arg database.CreateTextChannelParams) (database.TextChannel, error)
 	GetServerTextChannels(ctx context.Context, serverID uuid.UUID) ([]database.TextChannel, error)

@@ -32,9 +32,9 @@ type Server struct {
 	MemberCount sql.NullInt32  `json:"member_count"`
 	ServerLevel sql.NullInt32  `json:"server_level"`
 	MaxMembers  sql.NullInt32  `json:"max_members"`
-	InviteCode  sql.NullString `json:"invite_code"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
+	InviteCode  string         `json:"invite_code"`
 }
 
 type TextChannel struct {

@@ -90,7 +90,8 @@ func main() {
 	// Server Routes
 
 	mux.HandleFunc("POST /v1/servers", m.IsAuthenticated(h.CreateServer))
-	mux.HandleFunc("POST /v1/servers/join", m.IsAuthenticated(h.JoinServer))
+	mux.HandleFunc("POST /v1/servers/join", m.IsAuthenticated(h.JoinServerByID))
+	mux.HandleFunc("POST /v1/servers/code", m.IsAuthenticated(h.JoinServerByCode))
 	mux.HandleFunc("DELETE /v1/servers/user", m.IsAuthenticated(h.LeaveServer))
 	mux.HandleFunc("GET /v1/servers/recent", h.GetRecentServers)
 	mux.HandleFunc("GET /v1/servers/user/many", m.IsAuthenticated(h.GetUserServers))

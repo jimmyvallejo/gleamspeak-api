@@ -36,6 +36,7 @@ func (h *Handlers) CreateServer(w http.ResponseWriter, r *http.Request) {
 		ID:         uuid.New(),
 		OwnerID:    user.ID,
 		ServerName: request.ServerName,
+		InviteCode: uuid.New().String()[:12],
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
@@ -90,6 +91,7 @@ func (h *Handlers) GetUserServers(w http.ResponseWriter, r *http.Request) {
 			IconURL:         server.IconUrl.String,
 			BannerURL:       server.BannerUrl.String,
 			IsPublic:        server.IsPublic.Bool,
+			InviteCode:      server.InviteCode,
 			MemberCount:     server.MemberCount.Int32,
 			ServerLevel:     server.ServerLevel.Int32,
 			MaxMembers:      server.MaxMembers.Int32,
@@ -106,18 +108,77 @@ func (h *Handlers) GetUserServers(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, response)
 }
 
-type JoinServerRequest struct {
-	ServerID uuid.UUID `json:"server_id"`
+type JoinServerByCodeRequest struct {
+	InviteCode string `json:"invite_code"`
 }
 
-func (h *Handlers) JoinServer(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) JoinServerByCode(w http.ResponseWriter, r *http.Request) {
 	user, ok := r.Context().Value(common.UserContextKey).(database.User)
 	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	var request JoinServerRequest
+	var request JoinServerByCodeRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	foundServer, err := h.DB.GetOneServerByCode(r.Context(), request.InviteCode)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Server not found")
+		return
+	}
+
+	userServerParams := database.CreateUserServerParams{
+		UserID:   user.ID,
+		ServerID: foundServer.ID,
+		Role:     serverUser,
+	}
+
+	var userServer database.UserServer
+	if foundServer.IsPublic.Bool {
+		userServer, err = h.DB.CreateUserServer(r.Context(), userServerParams)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Failed to join server")
+			return
+		}
+	} else {
+		respondWithError(w, http.StatusForbidden, "Server is not public")
+		return
+	}
+
+	newCount := sql.NullInt32{
+		Int32: foundServer.MemberCount.Int32 + 1,
+		Valid: true,
+	}
+
+	updateMemberCountParams := database.UpdateServerMemberCountParams{
+		ID:          foundServer.ID,
+		MemberCount: newCount,
+	}
+
+	_, err = h.DB.UpdateServerMemberCount(r.Context(), updateMemberCountParams)
+	if err != nil {
+		log.Printf("Failed to update member count: %v", err)
+	}
+
+	respondWithJSON(w, http.StatusCreated, userServer)
+}
+
+type JoinServerByIDRequest struct {
+	ServerID uuid.UUID `json:"server_id"`
+}
+
+func (h *Handlers) JoinServerByID(w http.ResponseWriter, r *http.Request) {
+	user, ok := r.Context().Value(common.UserContextKey).(database.User)
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	var request JoinServerByIDRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid JSON")
 		return

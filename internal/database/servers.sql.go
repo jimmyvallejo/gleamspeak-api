@@ -18,17 +18,19 @@ INSERT INTO servers (
         id,
         owner_id,
         server_name,
+        invite_code,
         created_at,
         updated_at
     )
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, owner_id, server_name, description, icon_url, banner_url, is_public, member_count, server_level, max_members, invite_code, created_at, updated_at
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, owner_id, server_name, description, icon_url, banner_url, is_public, member_count, server_level, max_members, created_at, updated_at, invite_code
 `
 
 type CreateServerParams struct {
 	ID         uuid.UUID `json:"id"`
 	OwnerID    uuid.UUID `json:"owner_id"`
 	ServerName string    `json:"server_name"`
+	InviteCode string    `json:"invite_code"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
 }
@@ -38,6 +40,7 @@ func (q *Queries) CreateServer(ctx context.Context, arg CreateServerParams) (Ser
 		arg.ID,
 		arg.OwnerID,
 		arg.ServerName,
+		arg.InviteCode,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -53,15 +56,42 @@ func (q *Queries) CreateServer(ctx context.Context, arg CreateServerParams) (Ser
 		&i.MemberCount,
 		&i.ServerLevel,
 		&i.MaxMembers,
-		&i.InviteCode,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.InviteCode,
+	)
+	return i, err
+}
+
+const getOneServerByCode = `-- name: GetOneServerByCode :one
+SELECT id, owner_id, server_name, description, icon_url, banner_url, is_public, member_count, server_level, max_members, created_at, updated_at, invite_code
+FROM servers
+WHERE invite_code = $1
+`
+
+func (q *Queries) GetOneServerByCode(ctx context.Context, inviteCode string) (Server, error) {
+	row := q.db.QueryRowContext(ctx, getOneServerByCode, inviteCode)
+	var i Server
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.ServerName,
+		&i.Description,
+		&i.IconUrl,
+		&i.BannerUrl,
+		&i.IsPublic,
+		&i.MemberCount,
+		&i.ServerLevel,
+		&i.MaxMembers,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.InviteCode,
 	)
 	return i, err
 }
 
 const getOneServerByID = `-- name: GetOneServerByID :one
-SELECT id, owner_id, server_name, description, icon_url, banner_url, is_public, member_count, server_level, max_members, invite_code, created_at, updated_at
+SELECT id, owner_id, server_name, description, icon_url, banner_url, is_public, member_count, server_level, max_members, created_at, updated_at, invite_code
 FROM servers
 WHERE id = $1
 `
@@ -80,9 +110,9 @@ func (q *Queries) GetOneServerByID(ctx context.Context, id uuid.UUID) (Server, e
 		&i.MemberCount,
 		&i.ServerLevel,
 		&i.MaxMembers,
-		&i.InviteCode,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.InviteCode,
 	)
 	return i, err
 }

@@ -13,6 +13,7 @@ SELECT s.id AS server_id,
     s.member_count,
     s.server_level,
     s.max_members,
+    s.invite_code,
     s.created_at AS server_created_at,
     s.updated_at AS server_updated_at
 FROM user_servers us

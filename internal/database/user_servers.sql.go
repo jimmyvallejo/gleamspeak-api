@@ -74,6 +74,7 @@ SELECT s.id AS server_id,
     s.member_count,
     s.server_level,
     s.max_members,
+    s.invite_code,
     s.created_at AS server_created_at,
     s.updated_at AS server_updated_at
 FROM user_servers us
@@ -92,6 +93,7 @@ type GetUserServersRow struct {
 	MemberCount     sql.NullInt32  `json:"member_count"`
 	ServerLevel     sql.NullInt32  `json:"server_level"`
 	MaxMembers      sql.NullInt32  `json:"max_members"`
+	InviteCode      string         `json:"invite_code"`
 	ServerCreatedAt time.Time      `json:"server_created_at"`
 	ServerUpdatedAt time.Time      `json:"server_updated_at"`
 }
@@ -115,6 +117,7 @@ func (q *Queries) GetUserServers(ctx context.Context, userID uuid.UUID) ([]GetUs
 			&i.MemberCount,
 			&i.ServerLevel,
 			&i.MaxMembers,
+			&i.InviteCode,
 			&i.ServerCreatedAt,
 			&i.ServerUpdatedAt,
 		); err != nil {
