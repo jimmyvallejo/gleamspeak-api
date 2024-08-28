@@ -125,9 +125,7 @@ const updateUserAvatarByID = `-- name: UpdateUserAvatarByID :one
 UPDATE users
 SET avatar_url = $1
 WHERE id = $2
-RETURNING id,
-    email,
-    avatar_url
+RETURNING id, email, password, is_active, handle, first_name, last_name, bio, avatar_url, is_verified, created_at, updated_at
 `
 
 type UpdateUserAvatarByIDParams struct {
@@ -135,16 +133,23 @@ type UpdateUserAvatarByIDParams struct {
 	ID        uuid.UUID      `json:"id"`
 }
 
-type UpdateUserAvatarByIDRow struct {
-	ID        uuid.UUID      `json:"id"`
-	Email     string         `json:"email"`
-	AvatarUrl sql.NullString `json:"avatar_url"`
-}
-
-func (q *Queries) UpdateUserAvatarByID(ctx context.Context, arg UpdateUserAvatarByIDParams) (UpdateUserAvatarByIDRow, error) {
+func (q *Queries) UpdateUserAvatarByID(ctx context.Context, arg UpdateUserAvatarByIDParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, updateUserAvatarByID, arg.AvatarUrl, arg.ID)
-	var i UpdateUserAvatarByIDRow
-	err := row.Scan(&i.ID, &i.Email, &i.AvatarUrl)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Password,
+		&i.IsActive,
+		&i.Handle,
+		&i.FirstName,
+		&i.LastName,
+		&i.Bio,
+		&i.AvatarUrl,
+		&i.IsVerified,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
 	return i, err
 }
 

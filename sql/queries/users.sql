@@ -35,6 +35,4 @@ RETURNING *;
 UPDATE users
 SET avatar_url = $1
 WHERE id = $2
-RETURNING id,
-    email,
-    avatar_url;
+RETURNING *;

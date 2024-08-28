@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/database"
+	"github.com/jimmyvallejo/gleamspeak-api/internal/redis"
 )
 
 type DBInterface interface {
@@ -28,18 +29,20 @@ type DBInterface interface {
 	GetLanguageIDByName(ctx context.Context, language string) (uuid.UUID, error)
 	CreateTextMessage(ctx context.Context, arg database.CreateTextMessageParams) (database.TextMessage, error)
 	GetChannelTextMessages(ctx context.Context, channelID uuid.UUID) ([]database.GetChannelTextMessagesRow, error)
-	UpdateUserAvatarByID(ctx context.Context, arg database.UpdateUserAvatarByIDParams) (database.UpdateUserAvatarByIDRow, error)
+	UpdateUserAvatarByID(ctx context.Context, arg database.UpdateUserAvatarByIDParams) (database.User, error)
 }
 
 type Handlers struct {
 	DB  DBInterface
+	RDB *redis.RedisClient
 	JWT string
 	S3  *s3.Client
 }
 
-func NewHandlers(db DBInterface, jwt string, s3 *s3.Client) *Handlers {
+func NewHandlers(db DBInterface, rdb *redis.RedisClient, jwt string, s3 *s3.Client) *Handlers {
 	return &Handlers{
 		DB:  db,
+		RDB: rdb,
 		JWT: jwt,
 		S3:  s3,
 	}

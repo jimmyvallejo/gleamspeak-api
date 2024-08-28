@@ -20,6 +20,20 @@ type UserResponse struct {
 	Handle string    `json:"handle"`
 }
 
+type FullUserResponse struct {
+	ID         uuid.UUID `json:"id"`
+	Email      string    `json:"email"`
+	Handle     string    `json:"handle"`
+	IsActive   bool      `json:"is_active"`
+	FirstName  string    `json:"first_name"`
+	LastName   string    `json:"last_name"`
+	Bio        string    `json:"bio"`
+	AvatarURL  string    `json:"avatar_url"`
+	IsVerified bool      `json:"is_verified"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
 type CreateServerResponse struct {
 	ID         uuid.UUID `json:"id"`
 	OwnerID    uuid.UUID `json:"owner_id"`

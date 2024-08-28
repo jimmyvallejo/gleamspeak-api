@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -74,6 +75,31 @@ func (h *Handlers) CreateUserStandard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusCreated, response)
+}
+
+func (h *Handlers) FetchAuthUser(w http.ResponseWriter, r *http.Request) {
+	user, ok := r.Context().Value(common.UserContextKey).(database.User)
+
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "Unathorized")
+		return
+	}
+
+	response := FullUserResponse{
+		ID:         user.ID,
+		Email:      user.Email,
+		Handle:     user.Handle,
+		IsActive:   user.IsActive.Bool,
+		FirstName:  user.FirstName.String,
+		LastName:   user.LastName.String,
+		Bio:        user.Bio.String,
+		AvatarURL:  user.AvatarUrl.String,
+		IsVerified: user.IsVerified.Bool,
+		CreatedAt:  user.CreatedAt,
+		UpdatedAt:  user.UpdatedAt,
+	}
+
+	respondWithJSON(w, http.StatusOK, response)
 }
 
 type UpdateUserRequest struct {
@@ -158,10 +184,19 @@ func (h *Handlers) UpdateAvatar(w http.ResponseWriter, r *http.Request) {
 		AvatarUrl: avatarURL,
 	}
 
-	_, err = h.DB.UpdateUserAvatarByID(r.Context(), params)
+	user, err = h.DB.UpdateUserAvatarByID(r.Context(), params)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to update user")
 		return
+	}
+
+	userIDStr := user.ID.String()
+
+	err = h.RDB.SetJson("user"+userIDStr, user, time.Hour)
+	if err != nil {
+		log.Printf("Failed to save user to cache: %v", err)
+	} else {
+		log.Printf("User saved to cache: ID=%s", user.ID)
 	}
 
 	respondNoBody(w, http.StatusOK)

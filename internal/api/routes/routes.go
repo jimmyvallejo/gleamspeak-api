@@ -42,6 +42,7 @@ func (r *Router) SetupV1Routes() {
 	r.mux.HandleFunc("POST /v1/users", r.handlers.CreateUserStandard)
 	r.mux.HandleFunc("PUT /v1/users", r.middleware.IsAuthenticated(r.handlers.UpdateUser))
 	r.mux.HandleFunc("PUT /v1/users/avatar", r.middleware.IsAuthenticated(r.handlers.UpdateAvatar))
+	r.mux.HandleFunc("GET /v1/users/auth", r.middleware.IsAuthenticated(r.handlers.FetchAuthUser))
 
 	// Server Routes
 	r.mux.HandleFunc("POST /v1/servers", r.middleware.IsAuthenticated(r.handlers.CreateServer))
