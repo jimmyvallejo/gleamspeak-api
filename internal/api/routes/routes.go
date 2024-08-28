@@ -24,10 +24,14 @@ func NewRouter(h *handlers.Handlers, m *middleware.Middleware, w *websocket.Mana
 	}
 }
 
-func (r *Router) SetupRoutes() {
+func (r *Router) SetupV1Routes() {
+
 	// Test readiness
 	r.mux.HandleFunc("GET /v1/healthz", handlers.HandlerReadiness)
 	r.mux.HandleFunc("GET /v1/err", handlers.HandlerError)
+
+	// AWS Routes
+	r.mux.HandleFunc("POST /v1/s3/url", r.middleware.IsAuthenticated(r.handlers.GetSignedURL))
 
 	// Auth Routes
 	r.mux.HandleFunc("POST /v1/login", r.handlers.LoginUserStandard)
@@ -37,6 +41,7 @@ func (r *Router) SetupRoutes() {
 	// User Routes
 	r.mux.HandleFunc("POST /v1/users", r.handlers.CreateUserStandard)
 	r.mux.HandleFunc("PUT /v1/users", r.middleware.IsAuthenticated(r.handlers.UpdateUser))
+	r.mux.HandleFunc("PUT /v1/users/avatar", r.middleware.IsAuthenticated(r.handlers.UpdateAvatar))
 
 	// Server Routes
 	r.mux.HandleFunc("POST /v1/servers", r.middleware.IsAuthenticated(r.handlers.CreateServer))

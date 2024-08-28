@@ -93,3 +93,8 @@ type SimpleMessage struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
+
+type SignedURLResponse struct {
+	URL       string `json:"url"`
+	PublicURL string `json:"public_url"`
+}

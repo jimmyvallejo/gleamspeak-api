@@ -125,3 +125,45 @@ func (h *Handlers) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, response)
 
 }
+
+type UpdateUserAvatarRequest struct {
+	URL *string `json:"url"`
+}
+
+func (h *Handlers) UpdateAvatar(w http.ResponseWriter, r *http.Request) {
+	user, ok := r.Context().Value(common.UserContextKey).(database.User)
+
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "Unathorized")
+		return
+	}
+
+	request := UpdateUserAvatarRequest{}
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	var avatarURL sql.NullString
+	if request.URL != nil {
+		avatarURL = sql.NullString{
+			String: *request.URL,
+			Valid:  true,
+		}
+	}
+
+	params := database.UpdateUserAvatarByIDParams{
+		ID:        user.ID,
+		AvatarUrl: avatarURL,
+	}
+
+	_, err = h.DB.UpdateUserAvatarByID(r.Context(), params)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to update user")
+		return
+	}
+
+	respondNoBody(w, http.StatusOK)
+
+}

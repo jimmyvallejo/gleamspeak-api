@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/database"
 )
@@ -16,7 +17,7 @@ type DBInterface interface {
 	CreateServer(ctx context.Context, arg database.CreateServerParams) (database.Server, error)
 	GetRecentServers(ctx context.Context) ([]database.GetRecentServersRow, error)
 	CreateUserServer(ctx context.Context, arg database.CreateUserServerParams) (database.UserServer, error)
-	UpdateServerMemberCount(ctx context.Context, arg database.UpdateServerMemberCountParams) (database.UpdateServerMemberCountRow, error) 
+	UpdateServerMemberCount(ctx context.Context, arg database.UpdateServerMemberCountParams) (database.UpdateServerMemberCountRow, error)
 	GetUserServers(ctx context.Context, userID uuid.UUID) ([]database.GetUserServersRow, error)
 	GetUserServer(ctx context.Context, arg database.GetUserServerParams) (database.UserServer, error)
 	GetOneServerByID(ctx context.Context, id uuid.UUID) (database.Server, error)
@@ -27,16 +28,19 @@ type DBInterface interface {
 	GetLanguageIDByName(ctx context.Context, language string) (uuid.UUID, error)
 	CreateTextMessage(ctx context.Context, arg database.CreateTextMessageParams) (database.TextMessage, error)
 	GetChannelTextMessages(ctx context.Context, channelID uuid.UUID) ([]database.GetChannelTextMessagesRow, error)
+	UpdateUserAvatarByID(ctx context.Context, arg database.UpdateUserAvatarByIDParams) (database.UpdateUserAvatarByIDRow, error)
 }
 
 type Handlers struct {
 	DB  DBInterface
 	JWT string
+	S3  *s3.Client
 }
 
-func NewHandlers(db DBInterface, jwt string) *Handlers {
+func NewHandlers(db DBInterface, jwt string, s3 *s3.Client) *Handlers {
 	return &Handlers{
 		DB:  db,
 		JWT: jwt,
+		S3:  s3,
 	}
 }

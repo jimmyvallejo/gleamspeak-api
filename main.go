@@ -81,14 +81,14 @@ func main() {
 		S3:        s3Client,
 	}
 
-	h := handlers.NewHandlers(apiCfg.DB, apiCfg.JwtSecret)
+	h := handlers.NewHandlers(apiCfg.DB, apiCfg.JwtSecret, apiCfg.S3)
 	m := middleware.NewMiddleware(apiCfg.DB, apiCfg.RDB, apiCfg.JwtSecret)
 	w := websocket.NewManager(apiCfg.DB, apiCfg.RDB, h)
 
 	apiCfg.Handlers = h
 
 	router := routes.NewRouter(h, m, w)
-	router.SetupRoutes()
+	router.SetupV1Routes()
 
 	handler := c.Handler(router.GetHandler())
 

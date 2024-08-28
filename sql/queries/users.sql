@@ -16,19 +16,25 @@ VALUES (
         $6
     )
 RETURNING *;
-
 -- name: GetUserByID :one 
 SELECT *
 FROM users
 WHERE id = $1;
-
 -- name: GetUserByEmail :one 
 SELECT *
 FROM users
 WHERE email = $1;
-
 -- name: UpdateUserByID :one
 UPDATE users
-SET email = $1, handle = $2, updated_at = $3
+SET email = $1,
+    handle = $2,
+    updated_at = $3
 WHERE id = $4
 RETURNING *;
+-- name: UpdateUserAvatarByID :one
+UPDATE users
+SET avatar_url = $1
+WHERE id = $2
+RETURNING id,
+    email,
+    avatar_url;

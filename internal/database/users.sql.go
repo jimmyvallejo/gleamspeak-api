@@ -121,9 +121,38 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 	return i, err
 }
 
+const updateUserAvatarByID = `-- name: UpdateUserAvatarByID :one
+UPDATE users
+SET avatar_url = $1
+WHERE id = $2
+RETURNING id,
+    email,
+    avatar_url
+`
+
+type UpdateUserAvatarByIDParams struct {
+	AvatarUrl sql.NullString `json:"avatar_url"`
+	ID        uuid.UUID      `json:"id"`
+}
+
+type UpdateUserAvatarByIDRow struct {
+	ID        uuid.UUID      `json:"id"`
+	Email     string         `json:"email"`
+	AvatarUrl sql.NullString `json:"avatar_url"`
+}
+
+func (q *Queries) UpdateUserAvatarByID(ctx context.Context, arg UpdateUserAvatarByIDParams) (UpdateUserAvatarByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, updateUserAvatarByID, arg.AvatarUrl, arg.ID)
+	var i UpdateUserAvatarByIDRow
+	err := row.Scan(&i.ID, &i.Email, &i.AvatarUrl)
+	return i, err
+}
+
 const updateUserByID = `-- name: UpdateUserByID :one
 UPDATE users
-SET email = $1, handle = $2, updated_at = $3
+SET email = $1,
+    handle = $2,
+    updated_at = $3
 WHERE id = $4
 RETURNING id, email, password, is_active, handle, first_name, last_name, bio, avatar_url, is_verified, created_at, updated_at
 `
