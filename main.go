@@ -10,7 +10,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/api/middleware"
+	"github.com/jimmyvallejo/gleamspeak-api/internal/api/routes"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/api/v1/handlers"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/database"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/redis"
@@ -29,6 +33,8 @@ func main() {
 	port := os.Getenv("PORT")
 	dbUrl := os.Getenv("DB")
 	jwtSecret := os.Getenv("JWT_SECRET")
+	awsAccess := os.Getenv("AWS_ACCESS_KEY")
+	awsSecret := os.Getenv("AWS_SECRET_KEY")
 
 	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
@@ -47,7 +53,18 @@ func main() {
 		log.Print("Redis failed to initialize")
 	}
 
-	mux := http.NewServeMux()
+	credProvider := credentials.NewStaticCredentialsProvider(awsAccess, awsSecret, "")
+
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithCredentialsProvider(credProvider),
+		config.WithRegion("us-east-1"),
+	)
+
+	if err != nil {
+		log.Fatalf("Unable to load SDK config, %v", err)
+	}
+
+	s3Client := s3.NewFromConfig(cfg)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173", "http://localhost:3000"},
@@ -56,13 +73,12 @@ func main() {
 		AllowCredentials: true,
 	})
 
-	handler := c.Handler(mux)
-
 	apiCfg := APIConfig{
 		Port:      port,
 		DB:        dbQueries,
 		RDB:       rdb,
 		JwtSecret: jwtSecret,
+		S3:        s3Client,
 	}
 
 	h := handlers.NewHandlers(apiCfg.DB, apiCfg.JwtSecret)
@@ -71,45 +87,10 @@ func main() {
 
 	apiCfg.Handlers = h
 
-	// Test readiness
+	router := routes.NewRouter(h, m, w)
+	router.SetupRoutes()
 
-	mux.HandleFunc("GET /v1/healthz", handlers.HandlerReadiness)
-	mux.HandleFunc("GET /v1/err", handlers.HandlerError)
-
-	// Auth Routes
-
-	mux.HandleFunc("POST /v1/login", h.LoginUserStandard)
-	mux.HandleFunc("POST /v1/logout", h.LogoutUserStandard)
-	mux.HandleFunc("GET /v1/auth", m.IsAuthenticated(h.CheckAuthStatus))
-
-	// User Routes
-
-	mux.HandleFunc("POST /v1/users", h.CreateUserStandard)
-	mux.HandleFunc("PUT /v1/users", m.IsAuthenticated(h.UpdateUser))
-
-	// Server Routes
-
-	mux.HandleFunc("POST /v1/servers", m.IsAuthenticated(h.CreateServer))
-	mux.HandleFunc("POST /v1/servers/join", m.IsAuthenticated(h.JoinServerByID))
-	mux.HandleFunc("POST /v1/servers/code", m.IsAuthenticated(h.JoinServerByCode))
-	mux.HandleFunc("DELETE /v1/servers/user", m.IsAuthenticated(h.LeaveServer))
-	mux.HandleFunc("GET /v1/servers/recent", h.GetRecentServers)
-	mux.HandleFunc("GET /v1/servers/user/many", m.IsAuthenticated(h.GetUserServers))
-
-	// Text Channel Routes
-	mux.HandleFunc("POST /v1/channels/text", m.IsAuthenticated(h.CreateTextChannel))
-	mux.HandleFunc("GET /v1/channels/{serverID}", m.IsAuthenticated(h.GetServerTextChannels))
-
-	// Message Routes
-
-	mux.HandleFunc("GET /v1/messages/{channelID}", m.IsAuthenticated(h.GetChannelTextMessages))
-
-	//Token Routes
-	mux.HandleFunc("POST /v1/refresh", h.RefreshToken)
-
-	// Upgrade to WebSocket
-
-	mux.HandleFunc("/ws", w.ServeWs)
+	handler := c.Handler(router.GetHandler())
 
 	srv := &http.Server{
 		Addr:    ":" + apiCfg.Port,
