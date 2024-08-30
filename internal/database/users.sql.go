@@ -157,22 +157,31 @@ const updateUserByID = `-- name: UpdateUserByID :one
 UPDATE users
 SET email = $1,
     handle = $2,
-    updated_at = $3
-WHERE id = $4
+    first_name = $3,
+    last_name = $4,
+    bio = $5,
+    updated_at = $6
+WHERE id = $7
 RETURNING id, email, password, is_active, handle, first_name, last_name, bio, avatar_url, is_verified, created_at, updated_at
 `
 
 type UpdateUserByIDParams struct {
-	Email     string    `json:"email"`
-	Handle    string    `json:"handle"`
-	UpdatedAt time.Time `json:"updated_at"`
-	ID        uuid.UUID `json:"id"`
+	Email     string         `json:"email"`
+	Handle    string         `json:"handle"`
+	FirstName sql.NullString `json:"first_name"`
+	LastName  sql.NullString `json:"last_name"`
+	Bio       sql.NullString `json:"bio"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	ID        uuid.UUID      `json:"id"`
 }
 
 func (q *Queries) UpdateUserByID(ctx context.Context, arg UpdateUserByIDParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, updateUserByID,
 		arg.Email,
 		arg.Handle,
+		arg.FirstName,
+		arg.LastName,
+		arg.Bio,
 		arg.UpdatedAt,
 		arg.ID,
 	)

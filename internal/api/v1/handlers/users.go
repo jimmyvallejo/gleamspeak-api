@@ -103,15 +103,17 @@ func (h *Handlers) FetchAuthUser(w http.ResponseWriter, r *http.Request) {
 }
 
 type UpdateUserRequest struct {
-	Email  *string `json:"email"`
-	Handle *string `json:"handle"`
+	Email     string `json:"email"`
+	Handle    string `json:"handle"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Bio       string `json:"bio"`
 }
 
 func (h *Handlers) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	user, ok := r.Context().Value(common.UserContextKey).(database.User)
-
 	if !ok {
-		respondWithError(w, http.StatusUnauthorized, "Unathorized")
+		respondWithError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -125,21 +127,57 @@ func (h *Handlers) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	params := database.UpdateUserByIDParams{
 		Email:     user.Email,
 		Handle:    user.Handle,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Bio:       user.Bio,
 		UpdatedAt: time.Now(),
 		ID:        user.ID,
 	}
 
-	if request.Email != nil {
-		params.Email = *request.Email
+	if request.Email != "" {
+		params.Email = request.Email
 	}
-	if request.Handle != nil {
-		params.Handle = *request.Handle
+	if request.Handle != "" {
+		params.Handle = request.Handle
+	}
+	if request.FirstName != "" {
+		params.FirstName = sql.NullString{
+			String: request.FirstName,
+			Valid:  true,
+		}
+	} else {
+		params.FirstName = sql.NullString{Valid: false}
+	}
+	if request.LastName != "" {
+		params.LastName = sql.NullString{
+			String: request.LastName,
+			Valid:  true,
+		}
+	} else {
+		params.LastName = sql.NullString{Valid: false}
+	}
+	if request.Bio != "" {
+		params.Bio = sql.NullString{
+			String: request.Bio,
+			Valid:  true,
+		}
+	} else {
+		params.Bio = sql.NullString{Valid: false}
 	}
 
 	updatedUser, err := h.DB.UpdateUserByID(r.Context(), params)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to update user")
 		return
+	}
+
+	userIDStr := user.ID.String()
+
+	err = h.RDB.SetJson("user"+userIDStr, updatedUser, time.Hour)
+	if err != nil {
+		log.Printf("Failed to save user to cache: %v", err)
+	} else {
+		log.Printf("User saved to cache: ID=%s", user.ID)
 	}
 
 	response := UserResponse{
@@ -149,7 +187,6 @@ func (h *Handlers) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, response)
-
 }
 
 type UpdateUserAvatarRequest struct {

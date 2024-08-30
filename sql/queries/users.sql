@@ -28,8 +28,11 @@ WHERE email = $1;
 UPDATE users
 SET email = $1,
     handle = $2,
-    updated_at = $3
-WHERE id = $4
+    first_name = $3,
+    last_name = $4,
+    bio = $5,
+    updated_at = $6
+WHERE id = $7
 RETURNING *;
 -- name: UpdateUserAvatarByID :one
 UPDATE users
