@@ -6,3 +6,4 @@ const (
 	serverModerator = "moderator"
 	serverUser      = "user"
 )
+

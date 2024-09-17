@@ -40,3 +40,17 @@ WHERE id = $1
 RETURNING id,
     server_name,
     member_count;
+-- name: UpdateServerIconByID :one
+UPDATE servers
+SET icon_url = $2
+WHERE id = $1
+RETURNING id,
+    server_name,
+    icon_url;
+-- name: UpdateServerBannerByID :one
+UPDATE servers
+SET banner_url = $2
+WHERE id = $1
+RETURNING id,
+    server_name,
+    banner_url;

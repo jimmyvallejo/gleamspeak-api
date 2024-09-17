@@ -182,6 +182,60 @@ func (q *Queries) GetRecentServers(ctx context.Context) ([]GetRecentServersRow, 
 	return items, nil
 }
 
+const updateServerBannerByID = `-- name: UpdateServerBannerByID :one
+UPDATE servers
+SET banner_url = $2
+WHERE id = $1
+RETURNING id,
+    server_name,
+    banner_url
+`
+
+type UpdateServerBannerByIDParams struct {
+	ID        uuid.UUID      `json:"id"`
+	BannerUrl sql.NullString `json:"banner_url"`
+}
+
+type UpdateServerBannerByIDRow struct {
+	ID         uuid.UUID      `json:"id"`
+	ServerName string         `json:"server_name"`
+	BannerUrl  sql.NullString `json:"banner_url"`
+}
+
+func (q *Queries) UpdateServerBannerByID(ctx context.Context, arg UpdateServerBannerByIDParams) (UpdateServerBannerByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, updateServerBannerByID, arg.ID, arg.BannerUrl)
+	var i UpdateServerBannerByIDRow
+	err := row.Scan(&i.ID, &i.ServerName, &i.BannerUrl)
+	return i, err
+}
+
+const updateServerIconByID = `-- name: UpdateServerIconByID :one
+UPDATE servers
+SET icon_url = $2
+WHERE id = $1
+RETURNING id,
+    server_name,
+    icon_url
+`
+
+type UpdateServerIconByIDParams struct {
+	ID      uuid.UUID      `json:"id"`
+	IconUrl sql.NullString `json:"icon_url"`
+}
+
+type UpdateServerIconByIDRow struct {
+	ID         uuid.UUID      `json:"id"`
+	ServerName string         `json:"server_name"`
+	IconUrl    sql.NullString `json:"icon_url"`
+}
+
+func (q *Queries) UpdateServerIconByID(ctx context.Context, arg UpdateServerIconByIDParams) (UpdateServerIconByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, updateServerIconByID, arg.ID, arg.IconUrl)
+	var i UpdateServerIconByIDRow
+	err := row.Scan(&i.ID, &i.ServerName, &i.IconUrl)
+	return i, err
+}
+
 const updateServerMemberCount = `-- name: UpdateServerMemberCount :one
 UPDATE servers
 SET member_count = $2

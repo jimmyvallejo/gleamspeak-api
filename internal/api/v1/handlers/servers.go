@@ -295,6 +295,7 @@ func (h *Handlers) GetRecentServers(w http.ResponseWriter, r *http.Request) {
 	servers, err := h.DB.GetRecentServers(r.Context())
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch recent servers: %v", err))
+		return
 	}
 
 	SimpleRecentServers := make([]SimpleRecentServer, len(servers))
@@ -315,4 +316,52 @@ func (h *Handlers) GetRecentServers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, SimpleRecentServers)
+}
+
+type UpdateServerImageRequest struct {
+	ServerID uuid.UUID `json:"server_id"`
+	IsIcon   bool      `json:"is_icon"`
+	URL      string    `json:"url"`
+}
+
+func (h *Handlers) UpdateServerImages(w http.ResponseWriter, r *http.Request) {
+	request := UpdateServerImageRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+	log.Printf("Decoded request: %+v", request)
+
+
+	if request.IsIcon {
+		params := database.UpdateServerIconByIDParams{
+			ID: request.ServerID,
+			IconUrl: sql.NullString{
+				String: request.URL,
+				Valid:  request.URL != "",
+			},
+		}
+		updatedServer, err := h.DB.UpdateServerIconByID(r.Context(), params)
+		if err != nil {
+			respondWithError(w, http.StatusNotFound, "Server not found")
+			return
+		}
+		respondWithJSON(w, http.StatusOK, updatedServer)
+	} else {
+		params := database.UpdateServerBannerByIDParams{
+			ID: request.ServerID,
+			BannerUrl: sql.NullString{
+				String: request.URL,
+				Valid:  request.URL != "",
+			},
+		}
+		updatedServer, err := h.DB.UpdateServerBannerByID(r.Context(), params)
+		if err != nil {
+			respondWithError(w, http.StatusNotFound, "Server not found")
+			return
+		}
+		respondWithJSON(w, http.StatusOK, updatedServer)
+	}
 }

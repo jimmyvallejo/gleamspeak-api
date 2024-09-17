@@ -48,6 +48,7 @@ func (r *Router) SetupV1Routes() {
 	r.mux.HandleFunc("POST /v1/servers", r.middleware.IsAuthenticated(r.handlers.CreateServer))
 	r.mux.HandleFunc("POST /v1/servers/join", r.middleware.IsAuthenticated(r.handlers.JoinServerByID))
 	r.mux.HandleFunc("POST /v1/servers/code", r.middleware.IsAuthenticated(r.handlers.JoinServerByCode))
+	r.mux.HandleFunc("PUT /v1/servers/images", r.middleware.IsAuthenticated(r.handlers.UpdateServerImages))
 	r.mux.HandleFunc("DELETE /v1/servers/user", r.middleware.IsAuthenticated(r.handlers.LeaveServer))
 	r.mux.HandleFunc("GET /v1/servers/recent", r.handlers.GetRecentServers)
 	r.mux.HandleFunc("GET /v1/servers/user/many", r.middleware.IsAuthenticated(r.handlers.GetUserServers))
