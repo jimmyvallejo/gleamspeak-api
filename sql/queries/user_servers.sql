@@ -6,6 +6,7 @@ RETURNING *;
 -- name: GetUserServers :many
 SELECT s.id AS server_id,
     s.server_name,
+    s.owner_id,
     s.description,
     s.icon_url,
     s.banner_url,

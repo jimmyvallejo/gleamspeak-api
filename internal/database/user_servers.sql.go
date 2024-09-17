@@ -67,6 +67,7 @@ func (q *Queries) GetUserServer(ctx context.Context, arg GetUserServerParams) (U
 const getUserServers = `-- name: GetUserServers :many
 SELECT s.id AS server_id,
     s.server_name,
+    s.owner_id,
     s.description,
     s.icon_url,
     s.banner_url,
@@ -86,6 +87,7 @@ ORDER BY s.server_name ASC
 type GetUserServersRow struct {
 	ServerID        uuid.UUID      `json:"server_id"`
 	ServerName      string         `json:"server_name"`
+	OwnerID         uuid.UUID      `json:"owner_id"`
 	Description     sql.NullString `json:"description"`
 	IconUrl         sql.NullString `json:"icon_url"`
 	BannerUrl       sql.NullString `json:"banner_url"`
@@ -110,6 +112,7 @@ func (q *Queries) GetUserServers(ctx context.Context, userID uuid.UUID) ([]GetUs
 		if err := rows.Scan(
 			&i.ServerID,
 			&i.ServerName,
+			&i.OwnerID,
 			&i.Description,
 			&i.IconUrl,
 			&i.BannerUrl,

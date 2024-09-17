@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -69,6 +70,40 @@ func (h *Handlers) CreateServer(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (h *Handlers) GetServerByID(w http.ResponseWriter, r *http.Request) {
+	serverID := strings.TrimPrefix(r.URL.Path, "/v1/servers/")
+
+	serverUUID, err := uuid.Parse(serverID)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Failed to parse uuid, possible params error")
+		return
+	}
+
+	server, err := h.DB.GetOneServerByID(r.Context(), serverUUID)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Failed to find server")
+	}
+
+	response := SimpleServer{
+		ServerID:        server.ID,
+		OwnerID:         server.OwnerID,
+		ServerName:      server.ServerName,
+		Description:     server.Description.String,
+		IconURL:         server.IconUrl.String,
+		BannerURL:       server.BannerUrl.String,
+		IsPublic:        server.IsPublic.Bool,
+		InviteCode:      server.InviteCode,
+		MemberCount:     server.MemberCount.Int32,
+		ServerLevel:     server.ServerLevel.Int32,
+		MaxMembers:      server.MaxMembers.Int32,
+		ServerCreatedAt: server.CreatedAt,
+		ServerUpdatedAt: server.UpdatedAt,
+	}
+
+	respondWithJSON(w, http.StatusOK, response)
+
+}
+
 func (h *Handlers) GetUserServers(w http.ResponseWriter, r *http.Request) {
 	user, ok := r.Context().Value(common.UserContextKey).(database.User)
 	if !ok {
@@ -86,6 +121,7 @@ func (h *Handlers) GetUserServers(w http.ResponseWriter, r *http.Request) {
 	for i, server := range servers {
 		simpleServers[i] = SimpleServer{
 			ServerID:        server.ServerID,
+			OwnerID:         server.OwnerID,
 			ServerName:      server.ServerName,
 			Description:     server.Description.String,
 			IconURL:         server.IconUrl.String,

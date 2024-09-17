@@ -51,6 +51,7 @@ func (r *Router) SetupV1Routes() {
 	r.mux.HandleFunc("DELETE /v1/servers/user", r.middleware.IsAuthenticated(r.handlers.LeaveServer))
 	r.mux.HandleFunc("GET /v1/servers/recent", r.handlers.GetRecentServers)
 	r.mux.HandleFunc("GET /v1/servers/user/many", r.middleware.IsAuthenticated(r.handlers.GetUserServers))
+	r.mux.HandleFunc("GET /v1/servers/{serverID}", r.handlers.GetServerByID)
 
 	// Text Channel Routes
 	r.mux.HandleFunc("POST /v1/channels/text", r.middleware.IsAuthenticated(r.handlers.CreateTextChannel))

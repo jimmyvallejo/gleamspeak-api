@@ -42,6 +42,7 @@ type CreateServerResponse struct {
 
 type SimpleServer struct {
 	ServerID        uuid.UUID `json:"server_id"`
+	OwnerID			uuid.UUID `json:"owner_id"`
 	ServerName      string    `json:"server_name"`
 	Description     string    `json:"description"`
 	IconURL         string    `json:"icon_url"`
