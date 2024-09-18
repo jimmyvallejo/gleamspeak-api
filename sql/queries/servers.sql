@@ -54,3 +54,10 @@ WHERE id = $1
 RETURNING id,
     server_name,
     banner_url;
+-- name: UpdateServerByID :one
+UPDATE servers
+SET server_name = $1,
+    description = $2,
+    updated_at = $3
+WHERE id = $4
+RETURNING *;

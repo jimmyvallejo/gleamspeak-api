@@ -22,6 +22,7 @@ type DBInterface interface {
 	UpdateServerMemberCount(ctx context.Context, arg database.UpdateServerMemberCountParams) (database.UpdateServerMemberCountRow, error)
 	UpdateServerBannerByID(ctx context.Context, arg database.UpdateServerBannerByIDParams) (database.UpdateServerBannerByIDRow, error)
 	UpdateServerIconByID(ctx context.Context, arg database.UpdateServerIconByIDParams) (database.UpdateServerIconByIDRow, error)
+	UpdateServerByID(ctx context.Context, arg database.UpdateServerByIDParams) (database.Server, error)
 	
 	GetUserServers(ctx context.Context, userID uuid.UUID) ([]database.GetUserServersRow, error)
 	GetUserServer(ctx context.Context, arg database.GetUserServerParams) (database.UserServer, error)

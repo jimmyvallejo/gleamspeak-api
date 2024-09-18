@@ -209,6 +209,48 @@ func (q *Queries) UpdateServerBannerByID(ctx context.Context, arg UpdateServerBa
 	return i, err
 }
 
+const updateServerByID = `-- name: UpdateServerByID :one
+UPDATE servers
+SET server_name = $1,
+    description = $2,
+    updated_at = $3
+WHERE id = $4
+RETURNING id, owner_id, server_name, description, icon_url, banner_url, is_public, member_count, server_level, max_members, created_at, updated_at, invite_code
+`
+
+type UpdateServerByIDParams struct {
+	ServerName  string         `json:"server_name"`
+	Description sql.NullString `json:"description"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	ID          uuid.UUID      `json:"id"`
+}
+
+func (q *Queries) UpdateServerByID(ctx context.Context, arg UpdateServerByIDParams) (Server, error) {
+	row := q.db.QueryRowContext(ctx, updateServerByID,
+		arg.ServerName,
+		arg.Description,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	var i Server
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.ServerName,
+		&i.Description,
+		&i.IconUrl,
+		&i.BannerUrl,
+		&i.IsPublic,
+		&i.MemberCount,
+		&i.ServerLevel,
+		&i.MaxMembers,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.InviteCode,
+	)
+	return i, err
+}
+
 const updateServerIconByID = `-- name: UpdateServerIconByID :one
 UPDATE servers
 SET icon_url = $2

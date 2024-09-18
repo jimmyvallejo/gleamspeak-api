@@ -334,7 +334,6 @@ func (h *Handlers) UpdateServerImages(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Decoded request: %+v", request)
 
-
 	if request.IsIcon {
 		params := database.UpdateServerIconByIDParams{
 			ID: request.ServerID,
@@ -363,5 +362,57 @@ func (h *Handlers) UpdateServerImages(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		respondWithJSON(w, http.StatusOK, updatedServer)
+	}
+}
+
+type UpdateServerRequest struct {
+	ServerID    uuid.UUID `json:"server_id"`
+	ServerName  string    `json:"server_name"`
+	Description string    `json:"description"`
+}
+
+func (h *Handlers) UpdateServer(w http.ResponseWriter, r *http.Request) {
+
+	request := UpdateServerRequest{}
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	params := database.UpdateServerByIDParams{
+		ServerName: request.ServerName,
+		UpdatedAt:  time.Now(),
+		ID:         request.ServerID,
+	}
+
+	if request.Description != "" {
+		params.Description = sql.NullString{
+			String: request.Description,
+			Valid:  true,
+		}
+
+		updatedServer, err := h.DB.UpdateServerByID(r.Context(), params)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Failed to update user")
+			return
+		}
+
+		response := SimpleServer{
+			ServerID:        updatedServer.ID,
+			OwnerID:         updatedServer.OwnerID,
+			ServerName:      updatedServer.ServerName,
+			Description:     updatedServer.Description.String,
+			IconURL:         updatedServer.IconUrl.String,
+			BannerURL:       updatedServer.BannerUrl.String,
+			IsPublic:        updatedServer.IsPublic.Bool,
+			InviteCode:      updatedServer.InviteCode,
+			MemberCount:     updatedServer.MemberCount.Int32,
+			ServerLevel:     updatedServer.ServerLevel.Int32,
+			ServerCreatedAt: updatedServer.CreatedAt,
+			ServerUpdatedAt: params.UpdatedAt,
+		}
+
+		respondWithJSON(w, http.StatusOK, response)
 	}
 }
