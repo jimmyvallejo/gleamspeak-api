@@ -42,7 +42,7 @@ func (c *Client) readMessages() {
 		return
 	}
 
-	c.connection.SetReadLimit(512)
+	c.connection.SetReadLimit(4096)
 
 	c.connection.SetPongHandler(c.pongHandler)
 
