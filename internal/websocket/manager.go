@@ -93,8 +93,8 @@ func SendMessage(event Event, c *Client) error {
 		OwnerID:   ownerID,
 		ChannelID: channelID,
 		Message:   chatEvent.Message,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
 	}
 
 	createdMessage, err := c.manager.DB.CreateTextMessage(context.Background(), createParams)

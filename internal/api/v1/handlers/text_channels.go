@@ -52,8 +52,8 @@ func (h *Handlers) CreateTextChannel(w http.ResponseWriter, r *http.Request) {
 		ServerID:    serverUUID,
 		LanguageID:  languageID,
 		ChannelName: request.ChannelName,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		CreatedAt:   time.Now().UTC(),
+		UpdatedAt:   time.Now().UTC(),
 	}
 
 	channel, err := h.DB.CreateTextChannel(r.Context(), channelParams)

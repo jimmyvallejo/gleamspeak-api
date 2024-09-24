@@ -41,8 +41,8 @@ func (h *Handlers) CreateUserStandard(w http.ResponseWriter, r *http.Request) {
 			String: string(hashedPasswordBytes),
 			Valid:  true,
 		},
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
 	}
 
 	user, err := h.DB.CreateUserStandard(r.Context(), params)
@@ -130,7 +130,7 @@ func (h *Handlers) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Bio:       user.Bio,
-		UpdatedAt: time.Now(),
+		UpdatedAt: time.Now().UTC(),
 		ID:        user.ID,
 	}
 

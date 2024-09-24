@@ -94,8 +94,6 @@ func (c *Client) writeMessages() {
 				continue
 			}
 
-			log.Print(response)
-
 			var sentEvent = ReturnEvent{
 				Type:    message.Type,
 				Payload: response,

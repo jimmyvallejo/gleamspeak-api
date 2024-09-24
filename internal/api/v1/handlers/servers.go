@@ -38,8 +38,8 @@ func (h *Handlers) CreateServer(w http.ResponseWriter, r *http.Request) {
 		OwnerID:    user.ID,
 		ServerName: request.ServerName,
 		InviteCode: uuid.New().String()[:12],
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  time.Now().UTC(),
 	}
 
 	server, err := h.DB.CreateServer(r.Context(), serverParams)
@@ -382,7 +382,7 @@ func (h *Handlers) UpdateServer(w http.ResponseWriter, r *http.Request) {
 
 	params := database.UpdateServerByIDParams{
 		ServerName: request.ServerName,
-		UpdatedAt:  time.Now(),
+		UpdatedAt:  time.Now().UTC(),
 		ID:         request.ServerID,
 	}
 

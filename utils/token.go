@@ -65,7 +65,7 @@ func SetTokenCookie(w http.ResponseWriter, name, value string, maxAgeSeconds int
 	http.SetCookie(w, &http.Cookie{
 		Name:     name,
 		Value:    value,
-		Expires:  time.Now().Add(time.Duration(maxAgeSeconds) * time.Second),
+		Expires:  time.Now().UTC().Add(time.Duration(maxAgeSeconds) * time.Second),
 		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
