@@ -107,6 +107,7 @@ func SendMessage(event Event, c *Client) error {
 		ChannelID:   createdMessage.ChannelID,
 		OwnerID:     createdMessage.OwnerID,
 		OwnerHandle: chatEvent.Handle,
+		OwnerImage:  chatEvent.Avatar,
 		Message:     createdMessage.Message,
 		Image:       createdMessage.Image.String,
 		CreatedAt:   createdMessage.CreatedAt,

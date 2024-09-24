@@ -94,6 +94,8 @@ func (c *Client) writeMessages() {
 				continue
 			}
 
+			log.Print(response)
+
 			var sentEvent = ReturnEvent{
 				Type:    message.Type,
 				Payload: response,
@@ -106,12 +108,10 @@ func (c *Client) writeMessages() {
 
 			}
 
-			log.Printf("Data before WriteMessage: %s", string(data))
 			if err := c.connection.WriteMessage(websocket.TextMessage, data); err != nil {
 				log.Printf("failed to send message: %v", err)
 
 			}
-			log.Println("message sent")
 		case <-ticker.C:
 			log.Println("ping")
 

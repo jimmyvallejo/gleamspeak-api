@@ -125,16 +125,17 @@ func (h *Handlers) GetChannelTextMessages(w http.ResponseWriter, r *http.Request
 
 	normalizedMessages := make([]SimpleMessage, len(messages))
 
-	for i, channel := range messages {
+	for i, message := range messages {
 		normalizedMessages[i] = SimpleMessage{
-			ID:          channel.ID,
-			ChannelID:   channel.ChannelID,
-			OwnerID:     channel.OwnerID,
-			OwnerHandle: channel.Handle,
-			Message:     channel.Message,
-			Image:       channel.Image.String,
-			CreatedAt:   channel.CreatedAt,
-			UpdatedAt:   channel.UpdatedAt,
+			ID:          message.ID,
+			ChannelID:   message.ChannelID,
+			OwnerID:     message.OwnerID,
+			OwnerHandle: message.Handle,
+			OwnerImage:  message.AvatarUrl.String,
+			Message:     message.Message,
+			Image:       message.Image.String,
+			CreatedAt:   message.CreatedAt,
+			UpdatedAt:   message.UpdatedAt,
 		}
 
 	}

@@ -76,6 +76,7 @@ func (h *Handlers) CheckAuthStatus(w http.ResponseWriter, r *http.Request) {
 		ID:     user.ID,
 		Email:  user.Email,
 		Handle: user.Handle,
+		Avatar: user.AvatarUrl.String,
 	}
 
 	respondWithJSON(w, http.StatusOK, response)

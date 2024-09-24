@@ -25,6 +25,7 @@ type SendMessageEvent struct {
 	Handle  string `json:"handle"`
 	Channel string `json:"channel"`
 	Image   string `json:"image"`
+	Avatar  string `json:"avatar"`
 }
 
 type ReturnEvent struct {

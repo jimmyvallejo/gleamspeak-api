@@ -68,7 +68,8 @@ SELECT t.id,
     t.image,
     t.created_at,
     t.updated_at,
-    u.handle
+    u.handle,
+    u.avatar_url
 FROM text_messages t
     INNER JOIN users u ON t.owner_id = u.id
 WHERE t.channel_id = $1
@@ -83,6 +84,7 @@ type GetChannelTextMessagesRow struct {
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	Handle    string         `json:"handle"`
+	AvatarUrl sql.NullString `json:"avatar_url"`
 }
 
 func (q *Queries) GetChannelTextMessages(ctx context.Context, channelID uuid.UUID) ([]GetChannelTextMessagesRow, error) {
@@ -103,6 +105,7 @@ func (q *Queries) GetChannelTextMessages(ctx context.Context, channelID uuid.UUI
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Handle,
+			&i.AvatarUrl,
 		); err != nil {
 			return nil, err
 		}

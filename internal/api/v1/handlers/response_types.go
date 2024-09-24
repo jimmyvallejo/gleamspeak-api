@@ -18,6 +18,7 @@ type UserResponse struct {
 	ID     uuid.UUID `json:"id"`
 	Email  string    `json:"email"`
 	Handle string    `json:"handle"`
+	Avatar string    `json:"avatar"`
 }
 
 type FullUserResponse struct {
@@ -42,7 +43,7 @@ type CreateServerResponse struct {
 
 type SimpleServer struct {
 	ServerID        uuid.UUID `json:"server_id"`
-	OwnerID			uuid.UUID `json:"owner_id"`
+	OwnerID         uuid.UUID `json:"owner_id"`
 	ServerName      string    `json:"server_name"`
 	Description     string    `json:"description"`
 	IconURL         string    `json:"icon_url"`
@@ -102,6 +103,7 @@ type SimpleMessage struct {
 	ID          uuid.UUID `json:"id"`
 	OwnerID     uuid.UUID `json:"owner_id"`
 	OwnerHandle string    `json:"handle"`
+	OwnerImage  string    `json:"owner_image"`
 	ChannelID   uuid.UUID `json:"channel_id"`
 	Message     string    `json:"message"`
 	Image       string    `json:"image"`

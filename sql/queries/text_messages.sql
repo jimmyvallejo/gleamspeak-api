@@ -18,7 +18,8 @@ SELECT t.id,
     t.image,
     t.created_at,
     t.updated_at,
-    u.handle
+    u.handle,
+    u.avatar_url
 FROM text_messages t
     INNER JOIN users u ON t.owner_id = u.id
 WHERE t.channel_id = $1;
