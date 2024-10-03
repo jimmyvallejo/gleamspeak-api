@@ -67,7 +67,44 @@ func (h *Handlers) CreateServer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusCreated, response)
+}
 
+
+
+func (h *Handlers) DeleteServer(w http.ResponseWriter, r *http.Request) {
+	user, ok := r.Context().Value(common.UserContextKey).(database.User)
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "Unathorized")
+		return
+	}
+
+	serverID := strings.TrimPrefix(r.URL.Path, "/v1/servers/")
+
+	serverUUID, err := uuid.Parse(serverID)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Failed to parse uuid, possible params error")
+		return
+	}
+
+	
+	server, err := h.DB.GetOneServerByID(r.Context(), serverUUID)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Failed to find server")
+		return
+	}
+
+	if server.OwnerID != user.ID {
+		respondWithError(w, http.StatusForbidden, "Forbidden")
+		return
+	}
+
+	err = h.DB.DeleteServer(r.Context(), serverUUID)
+	if err != nil {
+		respondWithError(w, http.StatusForbidden, "Failed to delete server")
+		return
+	}
+	
+	respondNoBody(w, http.StatusOK)
 }
 
 func (h *Handlers) GetServerByID(w http.ResponseWriter, r *http.Request) {
@@ -82,6 +119,7 @@ func (h *Handlers) GetServerByID(w http.ResponseWriter, r *http.Request) {
 	server, err := h.DB.GetOneServerByID(r.Context(), serverUUID)
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, "Failed to find server")
+		return
 	}
 
 	response := SimpleServer{

@@ -63,6 +63,16 @@ func (q *Queries) CreateServer(ctx context.Context, arg CreateServerParams) (Ser
 	return i, err
 }
 
+const deleteServer = `-- name: DeleteServer :exec
+DELETE FROM servers
+WHERE id = $1
+`
+
+func (q *Queries) DeleteServer(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteServer, id)
+	return err
+}
+
 const getOneServerByCode = `-- name: GetOneServerByCode :one
 SELECT id, owner_id, server_name, description, icon_url, banner_url, is_public, member_count, server_level, max_members, created_at, updated_at, invite_code
 FROM servers

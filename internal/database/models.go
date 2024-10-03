@@ -84,3 +84,22 @@ type UserServer struct {
 	ServerID uuid.UUID `json:"server_id"`
 	Role     string    `json:"role"`
 }
+
+type VoiceChannel struct {
+	ID          uuid.UUID    `json:"id"`
+	OwnerID     uuid.UUID    `json:"owner_id"`
+	ServerID    uuid.UUID    `json:"server_id"`
+	LanguageID  uuid.UUID    `json:"language_id"`
+	ChannelName string       `json:"channel_name"`
+	ChannelID   string       `json:"channel_id"`
+	LastActive  sql.NullTime `json:"last_active"`
+	IsLocked    sql.NullBool `json:"is_locked"`
+	CreatedAt   time.Time    `json:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
+}
+
+type VoiceChannelMember struct {
+	UserID    uuid.UUID `json:"user_id"`
+	ChannelID uuid.UUID `json:"channel_id"`
+	ServerID  uuid.UUID `json:"server_id"`
+}

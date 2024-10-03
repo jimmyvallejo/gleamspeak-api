@@ -23,6 +23,7 @@ type DBInterface interface {
 	UpdateServerBannerByID(ctx context.Context, arg database.UpdateServerBannerByIDParams) (database.UpdateServerBannerByIDRow, error)
 	UpdateServerIconByID(ctx context.Context, arg database.UpdateServerIconByIDParams) (database.UpdateServerIconByIDRow, error)
 	UpdateServerByID(ctx context.Context, arg database.UpdateServerByIDParams) (database.Server, error)
+	DeleteServer(ctx context.Context, id uuid.UUID) error
 	
 	GetUserServers(ctx context.Context, userID uuid.UUID) ([]database.GetUserServersRow, error)
 	GetUserServer(ctx context.Context, arg database.GetUserServerParams) (database.UserServer, error)
@@ -30,6 +31,7 @@ type DBInterface interface {
 	GetOneServerByCode(ctx context.Context, inviteCode string) (database.Server, error)
 	GetRecentServers(ctx context.Context) ([]database.GetRecentServersRow, error)
 	DeleteUserServer(ctx context.Context, arg database.DeleteUserServerParams) error
+
 	
 	CreateTextChannel(ctx context.Context, arg database.CreateTextChannelParams) (database.TextChannel, error)
 	GetServerTextChannels(ctx context.Context, serverID uuid.UUID) ([]database.TextChannel, error)

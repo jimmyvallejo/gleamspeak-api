@@ -9,6 +9,10 @@ INSERT INTO servers (
     )
 VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
+-- name: DeleteServer :exec
+DELETE FROM servers
+WHERE id = $1;
+
 -- name: GetOneServerByID :one
 SELECT *
 FROM servers
