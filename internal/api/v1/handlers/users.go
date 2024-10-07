@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -237,5 +238,33 @@ func (h *Handlers) UpdateAvatar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondNoBody(w, http.StatusOK)
+}
 
+func (h *Handlers) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	user, ok := r.Context().Value(common.UserContextKey).(database.User)
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "Unathorized")
+		return
+	}
+
+	userID := strings.TrimPrefix(r.URL.Path, "/v1/users/")
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Failed to parse uuid, possible params error")
+		return
+	}
+
+	if user.ID != userUUID {
+		respondWithError(w, http.StatusForbidden, "Forbidden")
+		return
+	}
+
+	err = h.DB.DeleteUser(r.Context(), userUUID)
+	if err != nil {
+		respondWithError(w, http.StatusForbidden, "Failed to delete server")
+		return
+	}
+
+	respondNoBody(w, http.StatusOK)
 }

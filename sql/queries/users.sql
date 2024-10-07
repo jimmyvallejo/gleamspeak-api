@@ -16,6 +16,9 @@ VALUES (
         $6
     )
 RETURNING *;
+-- name: DeleteUser :exec
+DELETE FROM users
+WHERE id = $1;
 -- name: GetUserByID :one 
 SELECT *
 FROM users

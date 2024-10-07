@@ -14,6 +14,7 @@ type DBInterface interface {
 	GetRoleIDByName(ctx context.Context, name string) (uuid.UUID, error)
 	CreateUserRoles(ctx context.Context, params database.CreateUserRolesParams) (database.UserRole, error)
 	GetUserByEmail(ctx context.Context, email string) (database.User, error)
+	DeleteUser(ctx context.Context, id uuid.UUID) error
 	UpdateUserByID(ctx context.Context, arg database.UpdateUserByIDParams) (database.User, error)
 	UpdateUserAvatarByID(ctx context.Context, arg database.UpdateUserAvatarByIDParams) (database.User, error)
 	
