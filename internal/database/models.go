@@ -91,7 +91,6 @@ type VoiceChannel struct {
 	ServerID    uuid.UUID    `json:"server_id"`
 	LanguageID  uuid.UUID    `json:"language_id"`
 	ChannelName string       `json:"channel_name"`
-	ChannelID   string       `json:"channel_id"`
 	LastActive  sql.NullTime `json:"last_active"`
 	IsLocked    sql.NullBool `json:"is_locked"`
 	CreatedAt   time.Time    `json:"created_at"`

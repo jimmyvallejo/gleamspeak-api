@@ -60,6 +60,19 @@ func NewManager(db *database.Queries, rdb *redis.RedisClient, handlers *handlers
 func (m *Manager) setupEventHandlers() {
 	m.handlers[EventSendMessage] = SendMessage
 	m.handlers[EventChangeRoom] = ChatRoomHandler
+	m.handlers[EventChangeVoiceRoom] = VoiceRoomHandler
+	m.handlers[EventAddVoiceMember] = AddVoiceMember
+}
+
+func (m *Manager) routeEvent(event Event, c *Client) error {
+	if handler, ok := m.handlers[event.Type]; ok {
+		if err := handler(event, c); err != nil {
+			return err
+		}
+		return nil
+	} else {
+		return errors.New("no such event type")
+	}
 }
 
 func ChatRoomHandler(event Event, c *Client) error {
@@ -69,6 +82,16 @@ func ChatRoomHandler(event Event, c *Client) error {
 		return fmt.Errorf("bad payoad in req: %v", err)
 	}
 	c.chatroom = changeRoomEvent.ID
+	return nil
+}
+
+func VoiceRoomHandler(event Event, c *Client) error {
+	var changeRoomEvent changeRoomEvent
+
+	if err := json.Unmarshal(event.Payload, &changeRoomEvent); err != nil {
+		return fmt.Errorf("bad payoad in req: %v", err)
+	}
+	c.voiceroom = changeRoomEvent.ID
 	return nil
 }
 
@@ -132,15 +155,65 @@ func SendMessage(event Event, c *Client) error {
 	return nil
 }
 
-func (m *Manager) routeEvent(event Event, c *Client) error {
-	if handler, ok := m.handlers[event.Type]; ok {
-		if err := handler(event, c); err != nil {
-			return err
-		}
-		return nil
-	} else {
-		return errors.New("no such event type")
+func AddVoiceMember(event Event, c *Client) error {
+	var memberEvent AddVoiceMemberEvent
+	if err := json.Unmarshal(event.Payload, &memberEvent); err != nil {
+		return fmt.Errorf("bad payload in request: %v", err)
 	}
+
+	userUUID, err := uuid.Parse(memberEvent.User)
+	if err != nil {
+		return fmt.Errorf("invalid UUID format for user: %v", err)
+	}
+
+	channelUUID, err := uuid.Parse(memberEvent.Channel)
+	if err != nil {
+		return fmt.Errorf("invalid UUID format for channel: %v", err)
+	}
+
+	serverUUID, err := uuid.Parse(memberEvent.Server)
+	if err != nil {
+		return fmt.Errorf("invalid UUID format for server: %v", err)
+	}
+
+	var createParams = database.JoinVoiceChannelParams{
+		UserID:    userUUID,
+		ChannelID: channelUUID,
+		ServerID:  serverUUID,
+	}
+
+	_, err = c.manager.DB.JoinVoiceChannel(context.Background(), createParams)
+	if err != nil {
+		return fmt.Errorf("failed to add voice room member to database: %v", err)
+	}
+
+	m := handlers.ChannelMember{
+		UserID: userUUID,
+		Handle: memberEvent.Handle,
+	}
+
+	response := handlers.ChannelMemberExpanded{
+		ChannelMember: m,
+		Channel:       channelUUID,
+	}
+
+	payload, err := json.Marshal(response)
+	if err != nil {
+		return fmt.Errorf("error marshaling json for response: %v", err)
+	}
+
+	outgoingEvent := Event{
+		Payload: payload,
+		Type:    EventAddedVoiceMember,
+	}
+
+	for client := range c.manager.clients {
+		if client.voiceroom == c.voiceroom {
+			client.egress <- outgoingEvent
+		}
+	}
+
+	return nil
 }
 
 func (m *Manager) ServeWs(w http.ResponseWriter, r *http.Request) {

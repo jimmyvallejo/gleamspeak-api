@@ -61,6 +61,11 @@ func (r *Router) SetupV1Routes() {
 	r.mux.HandleFunc("POST /v1/channels/text", r.middleware.IsAuthenticated(r.handlers.CreateTextChannel))
 	r.mux.HandleFunc("GET /v1/channels/{serverID}", r.middleware.IsAuthenticated(r.handlers.GetServerTextChannels))
 
+	// Voice Channel Routes
+	r.mux.HandleFunc("POST /v1/channels/voice", r.middleware.IsAuthenticated(r.handlers.CreateVoiceChannel))
+	r.mux.HandleFunc("GET /v1/channels/voice/{serverID}", r.middleware.IsAuthenticated(r.handlers.GetServerVoiceChannels))
+	r.mux.HandleFunc("DELETE /v1/channels/voice/{userID}", r.middleware.IsAuthenticated(r.handlers.LeaveVoiceChannelByUserID))
+
 	// Message Routes
 	r.mux.HandleFunc("GET /v1/messages/{channelID}", r.middleware.IsAuthenticated(r.handlers.GetChannelTextMessages))
 

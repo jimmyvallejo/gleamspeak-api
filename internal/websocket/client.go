@@ -22,6 +22,7 @@ type Client struct {
 	manager    *Manager
 	egress     chan Event
 	chatroom   string
+	voiceroom  string
 }
 
 func NewClient(conn *websocket.Conn, manager *Manager) *Client {
@@ -29,6 +30,7 @@ func NewClient(conn *websocket.Conn, manager *Manager) *Client {
 		connection: conn,
 		manager:    manager,
 		egress:     make(chan Event),
+		voiceroom:  "",
 	}
 }
 
@@ -63,9 +65,9 @@ func (c *Client) readMessages() {
 			break
 		}
 
-		log.Printf("payload: %v", string(request.Type))
+		log.Printf("payload: %v", string(request.Payload))
 		if err := c.manager.routeEvent(request, c); err != nil {
-			log.Println("error handling message")
+			log.Println("error handling message", err)
 		}
 	}
 }
@@ -87,32 +89,48 @@ func (c *Client) writeMessages() {
 				return
 			}
 
-			var response = handlers.SimpleMessage{}
+			var sentEvent ReturnEvent
 
-			if err := json.Unmarshal(message.Payload, &response); err != nil {
-				log.Println("error unmarshaling message")
+			switch message.Type {
+			case "new_message":
+				var response handlers.SimpleMessage
+				if err := json.Unmarshal(message.Payload, &response); err != nil {
+					log.Println("error unmarshaling new_message:", err)
+					continue
+				}
+				sentEvent = ReturnEventMessage{
+					Type:    message.Type,
+					Payload: response,
+				}
+
+			case "added_voice_member":
+				var response handlers.ChannelMemberExpanded
+				if err := json.Unmarshal(message.Payload, &response); err != nil {
+					log.Println("error unmarshaling added_voice_member:", err)
+					continue
+				}
+				sentEvent = ReturnEventVoiceMember{
+					Type:    message.Type,
+					Payload: response,
+				}
+
+			default:
+				log.Printf("unknown message type: %s", message.Type)
 				continue
-			}
-
-			var sentEvent = ReturnEvent{
-				Type:    message.Type,
-				Payload: response,
 			}
 
 			data, err := json.Marshal(sentEvent)
 			if err != nil {
-				log.Println("error marshaling message")
+				log.Println("error marshaling message:", err)
 				continue
-
 			}
 
 			if err := c.connection.WriteMessage(websocket.TextMessage, data); err != nil {
 				log.Printf("failed to send message: %v", err)
-
 			}
+
 		case <-ticker.C:
 			log.Println("ping")
-
 			if err := c.connection.WriteMessage(websocket.PingMessage, []byte(``)); err != nil {
 				log.Println("writemsg err: ", err)
 				return

@@ -40,6 +40,10 @@ type DBInterface interface {
 	
 	CreateTextMessage(ctx context.Context, arg database.CreateTextMessageParams) (database.TextMessage, error)
 	GetChannelTextMessages(ctx context.Context, channelID uuid.UUID) ([]database.GetChannelTextMessagesRow, error)
+
+	CreateVoiceChannel(ctx context.Context, arg database.CreateVoiceChannelParams) (database.VoiceChannel, error)
+	GetServerVoiceChannels(ctx context.Context, serverID uuid.UUID) ([]database.GetServerVoiceChannelsRow, error)
+	LeaveVoiceChannelByUser(ctx context.Context, userID uuid.UUID) error
 }
 
 type Handlers struct {

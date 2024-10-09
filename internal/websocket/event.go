@@ -14,9 +14,12 @@ type Event struct {
 type EventHandler func(event Event, c *Client) error
 
 const (
-	EventSendMessage = "send_message"
-	EventNewMessage  = "new_message"
-	EventChangeRoom  = "change_room"
+	EventSendMessage      = "send_message"
+	EventNewMessage       = "new_message"
+	EventChangeRoom       = "change_room"
+	EventChangeVoiceRoom  = "change_voice_room"
+	EventAddVoiceMember   = "add_voice_member"
+	EventAddedVoiceMember = "added_voice_member"
 )
 
 type SendMessageEvent struct {
@@ -28,9 +31,33 @@ type SendMessageEvent struct {
 	Avatar  string `json:"avatar"`
 }
 
-type ReturnEvent struct {
+type AddVoiceMemberEvent struct {
+	User    string `json:"user_id"`
+	Channel string `json:"channel_id"`
+	Server  string `json:"server_id"`
+	Handle  string `json:"handle"`
+}
+
+type ReturnEvent interface {
+	GetType() string
+}
+
+type ReturnEventMessage struct {
 	Type    string                 `json:"type"`
 	Payload handlers.SimpleMessage `json:"payload"`
+}
+
+func (r ReturnEventMessage) GetType() string {
+	return r.Type
+}
+
+type ReturnEventVoiceMember struct {
+	Type    string `json:"type"`
+	Payload handlers.ChannelMemberExpanded
+}
+
+func (r ReturnEventVoiceMember) GetType() string {
+	return r.Type
 }
 
 type changeRoomEvent struct {

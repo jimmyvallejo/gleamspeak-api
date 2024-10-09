@@ -5,7 +5,6 @@ CREATE TABLE voice_channels (
     server_id UUID NOT NULL,
     language_id UUID NOT NULL,
     channel_name TEXT NOT NULL,
-    channel_id TEXT NOT NULL,
     last_active TIMESTAMP,
     is_locked BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL,
@@ -14,6 +13,8 @@ CREATE TABLE voice_channels (
     CONSTRAINT fk_server FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
     CONSTRAINT fk_language FOREIGN KEY (language_id) REFERENCES languages(id)
 );
+
+
 CREATE TABLE voice_channel_members (
     user_id UUID NOT NULL,
     channel_id UUID NOT NULL,

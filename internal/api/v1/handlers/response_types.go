@@ -88,15 +88,35 @@ type SimpleChannel struct {
 	ServerID         uuid.UUID `json:"server_id"`
 	LanguageID       uuid.UUID `json:"language_id"`
 	ChannelName      string    `json:"channel_name"`
-	LastActive       time.Time `json:"last_active"`
+	LastActive       time.Time `json:"last_active,omitempty"`
 	IsLocked         bool      `json:"is_locked"`
 	ChannelCreatedAt time.Time `json:"channel_created_at"`
 	ChannelUpdatedAt time.Time `json:"channel_updated_at"`
 }
 
+type ChannelMember struct {
+	UserID uuid.UUID `json:"user_id"`
+	Handle string    `json:"handle"`
+}
+
+type ChannelMemberExpanded struct {
+	ChannelMember ChannelMember `json:"member"`
+	Channel       uuid.UUID     `json:"channel_id"`
+}
+
+type SimpleChannelWithMembers struct {
+	SimpleChannel
+	Members []ChannelMember `json:"members"`
+}
+
 type GetServerTextChannelResponse struct {
 	ServerID uuid.UUID       `json:"server_id"`
 	Channels []SimpleChannel `json:"channels"`
+}
+
+type GetServerVoiceChannelResponse struct {
+	ServerID uuid.UUID                  `json:"server_id"`
+	Channels []SimpleChannelWithMembers `json:"channels"`
 }
 
 type SimpleMessage struct {
