@@ -61,6 +61,7 @@ func (m *Manager) setupEventHandlers() {
 	m.handlers[EventSendMessage] = SendMessage
 	m.handlers[EventChangeRoom] = ChatRoomHandler
 	m.handlers[EventChangeVoiceRoom] = VoiceRoomHandler
+	m.handlers[EventChangeServer] = ServerChangeHandler
 	m.handlers[EventAddVoiceMember] = AddVoiceMember
 }
 
@@ -94,6 +95,18 @@ func VoiceRoomHandler(event Event, c *Client) error {
 	c.voiceroom = changeRoomEvent.ID
 	return nil
 }
+
+func ServerChangeHandler(event Event, c *Client) error {
+	var changeRoomEvent changeRoomEvent
+
+	if err := json.Unmarshal(event.Payload, &changeRoomEvent); err != nil {
+		return fmt.Errorf("bad payoad in req: %v", err)
+	}
+	c.server = changeRoomEvent.ID
+	log.Printf("Changed Server to %v", changeRoomEvent.ID)
+	return nil
+}
+
 
 func SendMessage(event Event, c *Client) error {
 	var chatEvent SendMessageEvent
@@ -202,14 +215,26 @@ func AddVoiceMember(event Event, c *Client) error {
 		return fmt.Errorf("error marshaling json for response: %v", err)
 	}
 
-	outgoingEvent := Event{
+	outgoingRemove := Event{
+		Payload: payload,
+		Type:    EventRemovedVoiceMember,
+	}
+	
+
+	outgoingAdd := Event{
 		Payload: payload,
 		Type:    EventAddedVoiceMember,
 	}
 
 	for client := range c.manager.clients {
-		if client.voiceroom == c.voiceroom {
-			client.egress <- outgoingEvent
+		if client.server == memberEvent.Server {
+			client.egress <- outgoingRemove
+		}
+	}
+
+	for client := range c.manager.clients {
+		if client.server == memberEvent.Server {
+			client.egress <- outgoingAdd
 		}
 	}
 

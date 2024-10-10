@@ -14,12 +14,14 @@ type Event struct {
 type EventHandler func(event Event, c *Client) error
 
 const (
-	EventSendMessage      = "send_message"
-	EventNewMessage       = "new_message"
-	EventChangeRoom       = "change_room"
-	EventChangeVoiceRoom  = "change_voice_room"
-	EventAddVoiceMember   = "add_voice_member"
-	EventAddedVoiceMember = "added_voice_member"
+	EventSendMessage        = "send_message"
+	EventNewMessage         = "new_message"
+	EventChangeRoom         = "change_room"
+	EventChangeVoiceRoom    = "change_voice_room"
+	EventChangeServer       = "change_server"
+	EventAddVoiceMember     = "add_voice_member"
+	EventAddedVoiceMember   = "added_voice_member"
+	EventRemovedVoiceMember = "removed_voice_member"
 )
 
 type SendMessageEvent struct {
@@ -53,7 +55,7 @@ func (r ReturnEventMessage) GetType() string {
 
 type ReturnEventVoiceMember struct {
 	Type    string `json:"type"`
-	Payload handlers.ChannelMemberExpanded
+	Payload handlers.ChannelMemberExpanded `json:"payload"`
 }
 
 func (r ReturnEventVoiceMember) GetType() string {

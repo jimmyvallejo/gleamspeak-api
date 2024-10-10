@@ -23,6 +23,7 @@ type Client struct {
 	egress     chan Event
 	chatroom   string
 	voiceroom  string
+	server     string
 }
 
 func NewClient(conn *websocket.Conn, manager *Manager) *Client {
@@ -31,6 +32,7 @@ func NewClient(conn *websocket.Conn, manager *Manager) *Client {
 		manager:    manager,
 		egress:     make(chan Event),
 		voiceroom:  "",
+		server:     "",
 	}
 }
 
@@ -91,6 +93,8 @@ func (c *Client) writeMessages() {
 
 			var sentEvent ReturnEvent
 
+			log.Print(message.Type)
+
 			switch message.Type {
 			case "new_message":
 				var response handlers.SimpleMessage
@@ -104,6 +108,17 @@ func (c *Client) writeMessages() {
 				}
 
 			case "added_voice_member":
+				var response handlers.ChannelMemberExpanded
+				if err := json.Unmarshal(message.Payload, &response); err != nil {
+					log.Println("error unmarshaling added_voice_member:", err)
+					continue
+				}
+				sentEvent = ReturnEventVoiceMember{
+					Type:    message.Type,
+					Payload: response,
+				}
+
+			case "removed_voice_member":
 				var response handlers.ChannelMemberExpanded
 				if err := json.Unmarshal(message.Payload, &response); err != nil {
 					log.Println("error unmarshaling added_voice_member:", err)
