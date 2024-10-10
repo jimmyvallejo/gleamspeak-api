@@ -63,6 +63,7 @@ func (m *Manager) setupEventHandlers() {
 	m.handlers[EventChangeVoiceRoom] = VoiceRoomHandler
 	m.handlers[EventChangeServer] = ServerChangeHandler
 	m.handlers[EventAddVoiceMember] = AddVoiceMember
+	m.handlers[EventRemoveVoiceMember] = RemoveVoiceMember
 }
 
 func (m *Manager) routeEvent(event Event, c *Client) error {
@@ -106,7 +107,6 @@ func ServerChangeHandler(event Event, c *Client) error {
 	log.Printf("Changed Server to %v", changeRoomEvent.ID)
 	return nil
 }
-
 
 func SendMessage(event Event, c *Client) error {
 	var chatEvent SendMessageEvent
@@ -169,7 +169,13 @@ func SendMessage(event Event, c *Client) error {
 }
 
 func AddVoiceMember(event Event, c *Client) error {
-	var memberEvent AddVoiceMemberEvent
+	
+	err := RemoveVoiceMember(event, c)
+	if err != nil {
+		return fmt.Errorf("error removing user prior to add: %v", err)
+	}
+	
+	var memberEvent VoiceMemberEvent
 	if err := json.Unmarshal(event.Payload, &memberEvent); err != nil {
 		return fmt.Errorf("bad payload in request: %v", err)
 	}
@@ -215,21 +221,9 @@ func AddVoiceMember(event Event, c *Client) error {
 		return fmt.Errorf("error marshaling json for response: %v", err)
 	}
 
-	outgoingRemove := Event{
-		Payload: payload,
-		Type:    EventRemovedVoiceMember,
-	}
-	
-
 	outgoingAdd := Event{
 		Payload: payload,
 		Type:    EventAddedVoiceMember,
-	}
-
-	for client := range c.manager.clients {
-		if client.server == memberEvent.Server {
-			client.egress <- outgoingRemove
-		}
 	}
 
 	for client := range c.manager.clients {
@@ -238,6 +232,49 @@ func AddVoiceMember(event Event, c *Client) error {
 		}
 	}
 
+	return nil
+}
+
+func RemoveVoiceMember(event Event, c *Client) error {
+	var memberEvent VoiceMemberEvent
+	if err := json.Unmarshal(event.Payload, &memberEvent); err != nil {
+		return fmt.Errorf("bad payload in request: %v", err)
+	}
+	userUUID, err := uuid.Parse(memberEvent.User)
+	if err != nil {
+		return fmt.Errorf("invalid UUID format for user: %v", err)
+	}
+
+	channelUUID, err := uuid.Parse(memberEvent.Channel)
+	if err != nil {
+		return fmt.Errorf("invalid UUID format for channel: %v", err)
+	}
+
+	m := handlers.ChannelMember{
+		UserID: userUUID,
+		Handle: memberEvent.Handle,
+	}
+
+	response := handlers.ChannelMemberExpanded{
+		ChannelMember: m,
+		Channel:       channelUUID,
+	}
+
+	payload, err := json.Marshal(response)
+	if err != nil {
+		return fmt.Errorf("error marshaling json for response: %v", err)
+	}
+
+	outgoingRemove := Event{
+		Payload: payload,
+		Type:    EventRemovedVoiceMember,
+	}
+
+	for client := range c.manager.clients {
+		if client.server == memberEvent.Server {
+			client.egress <- outgoingRemove
+		}
+	}
 	return nil
 }
 

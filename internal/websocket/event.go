@@ -21,6 +21,7 @@ const (
 	EventChangeServer       = "change_server"
 	EventAddVoiceMember     = "add_voice_member"
 	EventAddedVoiceMember   = "added_voice_member"
+	EventRemoveVoiceMember  = "remove_voice_member"
 	EventRemovedVoiceMember = "removed_voice_member"
 )
 
@@ -33,7 +34,7 @@ type SendMessageEvent struct {
 	Avatar  string `json:"avatar"`
 }
 
-type AddVoiceMemberEvent struct {
+type VoiceMemberEvent struct {
 	User    string `json:"user_id"`
 	Channel string `json:"channel_id"`
 	Server  string `json:"server_id"`
@@ -54,7 +55,7 @@ func (r ReturnEventMessage) GetType() string {
 }
 
 type ReturnEventVoiceMember struct {
-	Type    string `json:"type"`
+	Type    string                         `json:"type"`
 	Payload handlers.ChannelMemberExpanded `json:"payload"`
 }
 
