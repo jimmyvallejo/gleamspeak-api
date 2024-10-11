@@ -5,8 +5,8 @@ allowing users to create servers, channels, voice chat, and exchange messages in
 
 ## Features
 
-- User authentication and profiles - [50%]
-- Server creation and management - [50%]
+- User authentication and profiles - [✔️]
+- Server creation and management - [✔️]
 - Text channels within servers - [✔️]
 - Real-time messaging - [✔️]
 - Real-time voice chat - In Progress
