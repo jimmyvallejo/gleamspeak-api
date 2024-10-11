@@ -5,22 +5,19 @@ import (
 
 	"github.com/jimmyvallejo/gleamspeak-api/internal/api/middleware"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/api/v1/handlers"
-	"github.com/jimmyvallejo/gleamspeak-api/internal/websocket"
 )
 
 type Router struct {
 	mux        *http.ServeMux
 	handlers   *handlers.Handlers
 	middleware *middleware.Middleware
-	websocket  *websocket.Manager
 }
 
-func NewRouter(h *handlers.Handlers, m *middleware.Middleware, w *websocket.Manager) *Router {
+func NewRouter(h *handlers.Handlers, m *middleware.Middleware) *Router {
 	return &Router{
 		mux:        http.NewServeMux(),
 		handlers:   h,
 		middleware: m,
-		websocket:  w,
 	}
 }
 
@@ -73,7 +70,7 @@ func (r *Router) SetupV1Routes() {
 	r.mux.HandleFunc("POST /v1/refresh", r.handlers.RefreshToken)
 
 	// Upgrade to WebSocket
-	r.mux.HandleFunc("/ws", r.websocket.ServeWs)
+	r.mux.HandleFunc("GET /ws", r.handlers.HandleWebSocketUpgrade)
 }
 
 func (r *Router) GetHandler() http.Handler {

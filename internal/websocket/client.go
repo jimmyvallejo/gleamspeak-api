@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/jimmyvallejo/gleamspeak-api/internal/api/v1/handlers"
 )
 
 var (
@@ -21,18 +20,20 @@ type Client struct {
 	connection *websocket.Conn
 	manager    *Manager
 	egress     chan Event
+	userID     string
+	handle     string
 	chatroom   string
 	voiceroom  string
 	server     string
 }
 
-func NewClient(conn *websocket.Conn, manager *Manager) *Client {
+func NewClient(conn *websocket.Conn, manager *Manager, id, handle string) *Client {
 	return &Client{
 		connection: conn,
 		manager:    manager,
 		egress:     make(chan Event),
-		voiceroom:  "",
-		server:     "",
+		userID:     id,
+		handle:     handle,
 	}
 }
 
@@ -97,7 +98,7 @@ func (c *Client) writeMessages() {
 
 			switch message.Type {
 			case "new_message":
-				var response handlers.SimpleMessage
+				var response SimpleMessage
 				if err := json.Unmarshal(message.Payload, &response); err != nil {
 					log.Println("error unmarshaling new_message:", err)
 					continue
@@ -108,7 +109,7 @@ func (c *Client) writeMessages() {
 				}
 
 			case "added_voice_member":
-				var response handlers.ChannelMemberExpanded
+				var response ChannelMemberExpanded
 				if err := json.Unmarshal(message.Payload, &response); err != nil {
 					log.Println("error unmarshaling added_voice_member:", err)
 					continue
@@ -119,7 +120,7 @@ func (c *Client) writeMessages() {
 				}
 
 			case "removed_voice_member":
-				var response handlers.ChannelMemberExpanded
+				var response ChannelMemberExpanded
 				if err := json.Unmarshal(message.Payload, &response); err != nil {
 					log.Println("error unmarshaling added_voice_member:", err)
 					continue

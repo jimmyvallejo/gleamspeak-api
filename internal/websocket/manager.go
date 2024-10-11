@@ -12,7 +12,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/jimmyvallejo/gleamspeak-api/internal/api/v1/handlers"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/database"
 	"github.com/jimmyvallejo/gleamspeak-api/internal/redis"
 )
@@ -36,22 +35,20 @@ var webSocketUpgrader = websocket.Upgrader{
 }
 
 type Manager struct {
-	clients       ClientList
-	DB            *database.Queries
-	RDB           *redis.RedisClient
-	RouteHandlers *handlers.Handlers
+	clients ClientList
+	DB      *database.Queries
+	RDB     *redis.RedisClient
 	sync.RWMutex
 
 	handlers map[string]EventHandler
 }
 
-func NewManager(db *database.Queries, rdb *redis.RedisClient, handlers *handlers.Handlers) *Manager {
+func NewManager(db *database.Queries, rdb *redis.RedisClient) *Manager {
 	m := &Manager{
-		clients:       make(ClientList),
-		DB:            db,
-		RDB:           rdb,
-		RouteHandlers: handlers,
-		handlers:      make(map[string]EventHandler),
+		clients:  make(ClientList),
+		DB:       db,
+		RDB:      rdb,
+		handlers: make(map[string]EventHandler),
 	}
 	m.setupEventHandlers()
 	return m
@@ -138,7 +135,7 @@ func SendMessage(event Event, c *Client) error {
 		return fmt.Errorf("failed to add message to database: %v", err)
 	}
 
-	var response = handlers.SimpleMessage{
+	var response = SimpleMessage{
 		ID:          createdMessage.ID,
 		ChannelID:   createdMessage.ChannelID,
 		OwnerID:     createdMessage.OwnerID,
@@ -169,12 +166,12 @@ func SendMessage(event Event, c *Client) error {
 }
 
 func AddVoiceMember(event Event, c *Client) error {
-	
+
 	err := RemoveVoiceMember(event, c)
 	if err != nil {
 		return fmt.Errorf("error removing user prior to add: %v", err)
 	}
-	
+
 	var memberEvent VoiceMemberEvent
 	if err := json.Unmarshal(event.Payload, &memberEvent); err != nil {
 		return fmt.Errorf("bad payload in request: %v", err)
@@ -206,12 +203,12 @@ func AddVoiceMember(event Event, c *Client) error {
 		return fmt.Errorf("failed to add voice room member to database: %v", err)
 	}
 
-	m := handlers.ChannelMember{
+	m := ChannelMember{
 		UserID: userUUID,
 		Handle: memberEvent.Handle,
 	}
 
-	response := handlers.ChannelMemberExpanded{
+	response := ChannelMemberExpanded{
 		ChannelMember: m,
 		Channel:       channelUUID,
 	}
@@ -250,12 +247,12 @@ func RemoveVoiceMember(event Event, c *Client) error {
 		return fmt.Errorf("invalid UUID format for channel: %v", err)
 	}
 
-	m := handlers.ChannelMember{
+	m := ChannelMember{
 		UserID: userUUID,
 		Handle: memberEvent.Handle,
 	}
 
-	response := handlers.ChannelMemberExpanded{
+	response := ChannelMemberExpanded{
 		ChannelMember: m,
 		Channel:       channelUUID,
 	}
@@ -278,7 +275,7 @@ func RemoveVoiceMember(event Event, c *Client) error {
 	return nil
 }
 
-func (m *Manager) ServeWs(w http.ResponseWriter, r *http.Request) {
+func (m *Manager) ServeWs(w http.ResponseWriter, r *http.Request, userId, handle string) {
 	log.Println("New WebSocket connection attempt")
 
 	conn, err := webSocketUpgrader.Upgrade(w, r, nil)
@@ -289,7 +286,7 @@ func (m *Manager) ServeWs(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("WebSocket connection established successfully")
 
-	client := NewClient(conn, m)
+	client := NewClient(conn, m, userId, handle)
 	m.addClient(client)
 
 	go client.readMessages()
@@ -303,14 +300,48 @@ func (m *Manager) addClient(client *Client) {
 	m.clients[client] = true
 }
 
-func (m *Manager) removeClient(client *Client) {
-	m.Lock()
-	defer m.Unlock()
 
-	if _, ok := m.clients[client]; ok {
-		client.connection.Close()
-		delete(m.clients, client)
-	}
+func (m *Manager) removeClient(client *Client) {
+    payload := VoiceMemberEvent{
+        User:    client.userID,
+        Channel: client.voiceroom,
+        Server:  client.server,
+        Handle:  client.handle,
+    }
+
+    jsonPayload, err := json.Marshal(payload)
+    if err != nil {
+        log.Printf("Error marshaling payload: %v", err)
+    }
+
+    event := Event{
+        Type:    EventRemoveVoiceMember,
+        Payload: json.RawMessage(jsonPayload),
+    }
+
+    err = RemoveVoiceMember(event, client)
+    if err != nil {
+        log.Printf("Error removing voice member: %v", err)
+    }
+
+    m.Lock()
+    defer m.Unlock()
+
+    if _, ok := m.clients[client]; ok {
+        if client.egress != nil {
+            close(client.egress)
+        }
+
+        if err := client.connection.Close(); err != nil {
+            log.Printf("Error closing client connection: %v", err)
+        }
+
+        delete(m.clients, client)
+
+        log.Printf("Client %s removed from manager", client.userID)
+    } else {
+        log.Printf("Client %s not found in manager", client.userID)
+    }
 }
 
 // func checkOrigin(r *http.Request) bool {

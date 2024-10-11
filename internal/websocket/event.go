@@ -2,8 +2,6 @@ package websocket
 
 import (
 	"encoding/json"
-
-	"github.com/jimmyvallejo/gleamspeak-api/internal/api/v1/handlers"
 )
 
 type Event struct {
@@ -47,7 +45,7 @@ type ReturnEvent interface {
 
 type ReturnEventMessage struct {
 	Type    string                 `json:"type"`
-	Payload handlers.SimpleMessage `json:"payload"`
+	Payload SimpleMessage `json:"payload"`
 }
 
 func (r ReturnEventMessage) GetType() string {
@@ -56,7 +54,7 @@ func (r ReturnEventMessage) GetType() string {
 
 type ReturnEventVoiceMember struct {
 	Type    string                         `json:"type"`
-	Payload handlers.ChannelMemberExpanded `json:"payload"`
+	Payload ChannelMemberExpanded `json:"payload"`
 }
 
 func (r ReturnEventVoiceMember) GetType() string {
