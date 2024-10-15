@@ -70,7 +70,31 @@ func (h *Handlers) CreateTextChannel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusCreated, response)
+}
 
+func (h *Handlers) DeleteTextChannel(w http.ResponseWriter, r *http.Request) {
+	_, ok := r.Context().Value(common.UserContextKey).(database.User)
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "Unathorized")
+		return
+	}
+
+	channelID := strings.TrimPrefix(r.URL.Path, "/v1/channels/text/")
+
+	channelUUID, err := uuid.Parse(channelID)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Failed to parse uuid, possible params error")
+		return
+	}
+
+
+	err = h.DB.DeleteTextChannel(r.Context(), channelUUID)
+	if err != nil {
+		respondWithError(w, http.StatusForbidden, "Failed to delete text channel")
+		return
+	}
+	
+	respondNoBody(w, http.StatusOK)
 }
 
 func (h *Handlers) GetServerTextChannels(w http.ResponseWriter, r *http.Request) {

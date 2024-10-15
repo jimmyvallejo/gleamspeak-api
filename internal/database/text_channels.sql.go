@@ -61,6 +61,16 @@ func (q *Queries) CreateTextChannel(ctx context.Context, arg CreateTextChannelPa
 	return i, err
 }
 
+const deleteTextChannel = `-- name: DeleteTextChannel :exec
+DELETE FROM text_channels
+WHERE id = $1
+`
+
+func (q *Queries) DeleteTextChannel(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteTextChannel, id)
+	return err
+}
+
 const getServerTextChannels = `-- name: GetServerTextChannels :many
 SELECT id, owner_id, server_id, language_id, channel_name, last_active, is_locked, created_at, updated_at FROM text_channels
 WHERE server_id = $1

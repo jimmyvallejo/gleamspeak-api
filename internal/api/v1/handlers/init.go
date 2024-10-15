@@ -35,6 +35,7 @@ type DBInterface interface {
 	DeleteUserServer(ctx context.Context, arg database.DeleteUserServerParams) error
 
 	CreateTextChannel(ctx context.Context, arg database.CreateTextChannelParams) (database.TextChannel, error)
+	DeleteTextChannel(ctx context.Context, id uuid.UUID) error
 	GetServerTextChannels(ctx context.Context, serverID uuid.UUID) ([]database.TextChannel, error)
 	GetLanguageIDByName(ctx context.Context, language string) (uuid.UUID, error)
 
