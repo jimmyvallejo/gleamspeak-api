@@ -95,6 +95,28 @@ func VoiceRoomHandler(event Event, c *Client) error {
 }
 
 func ServerChangeHandler(event Event, c *Client) error {
+	payload := VoiceMemberEvent{
+		User:    c.userID,
+		Channel: c.voiceroom,
+		Server:  c.server,
+		Handle:  c.handle,
+	}
+
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("Error marshaling payload: %v", err)
+	}
+
+	removeEvent := Event{
+		Type:    EventRemoveVoiceMember,
+		Payload: json.RawMessage(jsonPayload),
+	}
+
+	err = RemoveVoiceMember(removeEvent, c)
+	if err != nil {
+		log.Printf("Error removing voice member: %v", err)
+	}
+
 	var changeRoomEvent changeRoomEvent
 
 	if err := json.Unmarshal(event.Payload, &changeRoomEvent); err != nil {
@@ -300,48 +322,47 @@ func (m *Manager) addClient(client *Client) {
 	m.clients[client] = true
 }
 
-
 func (m *Manager) removeClient(client *Client) {
-    payload := VoiceMemberEvent{
-        User:    client.userID,
-        Channel: client.voiceroom,
-        Server:  client.server,
-        Handle:  client.handle,
-    }
+	payload := VoiceMemberEvent{
+		User:    client.userID,
+		Channel: client.voiceroom,
+		Server:  client.server,
+		Handle:  client.handle,
+	}
 
-    jsonPayload, err := json.Marshal(payload)
-    if err != nil {
-        log.Printf("Error marshaling payload: %v", err)
-    }
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("Error marshaling payload: %v", err)
+	}
 
-    event := Event{
-        Type:    EventRemoveVoiceMember,
-        Payload: json.RawMessage(jsonPayload),
-    }
+	event := Event{
+		Type:    EventRemoveVoiceMember,
+		Payload: json.RawMessage(jsonPayload),
+	}
 
-    err = RemoveVoiceMember(event, client)
-    if err != nil {
-        log.Printf("Error removing voice member: %v", err)
-    }
+	err = RemoveVoiceMember(event, client)
+	if err != nil {
+		log.Printf("Error removing voice member: %v", err)
+	}
 
-    m.Lock()
-    defer m.Unlock()
+	m.Lock()
+	defer m.Unlock()
 
-    if _, ok := m.clients[client]; ok {
-        if client.egress != nil {
-            close(client.egress)
-        }
+	if _, ok := m.clients[client]; ok {
+		if client.egress != nil {
+			close(client.egress)
+		}
 
-        if err := client.connection.Close(); err != nil {
-            log.Printf("Error closing client connection: %v", err)
-        }
+		if err := client.connection.Close(); err != nil {
+			log.Printf("Error closing client connection: %v", err)
+		}
 
-        delete(m.clients, client)
+		delete(m.clients, client)
 
-        log.Printf("Client %s removed from manager", client.userID)
-    } else {
-        log.Printf("Client %s not found in manager", client.userID)
-    }
+		log.Printf("Client %s removed from manager", client.userID)
+	} else {
+		log.Printf("Client %s not found in manager", client.userID)
+	}
 }
 
 // func checkOrigin(r *http.Request) bool {
